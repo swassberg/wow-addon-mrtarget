@@ -1,5 +1,5 @@
 --
--- MrTarget v1.0.3
+-- MrTarget v1
 -- =====================================================================
 -- Copyright (C) 2014 Lock of War, Developmental (Pty) Ltd
 --
@@ -112,16 +112,19 @@ local function GetUnitNameReadable(unit, showServerName)
   end
 end
 
-function MrTarget:GetName(name)  
-  if NAME_READABLE[name] == nil then
-    if name and self:IsUTF8(name) then      
-      NAME_READABLE[name] = NAME_OPTIONS[NAME_COUNT];       
-      NAME_COUNT = NAME_COUNT+1      
-    else
-      NAME_READABLE[name] = name;
+function MrTarget:GetName(name)    
+  if name then
+    if NAME_READABLE[name] == nil then    
+      if self:IsUTF8(name) then      
+        NAME_READABLE[name] = NAME_OPTIONS[NAME_COUNT];       
+        NAME_COUNT = NAME_COUNT+1;   
+      else
+        NAME_READABLE[name] = name;
+      end
     end
+    return NAME_READABLE[name];
   end
-  return NAME_READABLE[name];
+  return name;
 end
 
 function MrTarget:IsUTF8(name)

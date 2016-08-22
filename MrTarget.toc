@@ -1,6 +1,6 @@
 ## Interface: 50400
 ## Author: Renevatium
-## Version: 1.0.3
+## Version: 1.0.4
 ## Title: MrTarget
 ## DefaultState: Enabled
 ## Notes: See README and LICENSE respectively
