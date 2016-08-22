@@ -1,6 +1,6 @@
 ## Interface: 60000
 ## Author: Renevatium
-## Version: 2.0.3
+## Version: 2.0.4
 ## Title: MrTarget
 ## DefaultState: Enabled
 ## SavedVariables: OPTIONS

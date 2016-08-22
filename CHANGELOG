@@ -1,9 +1,13 @@
-MrTarget v2.0.3
+MrTarget v2.0.4
 =====================================================================
 Copyright (C) 2014 Lock of War, Developmental (Pty) Ltd
 
 Warlords of Draenor v6.0.3
 ---------------------------------------------------------------------
+11/12/2014
+v2.0.4
+Fixed bug causing objectives to hide in Garrisson
+
 11/12/2014
 v2.0.3
 Added enable/disable option for battlefields

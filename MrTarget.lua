@@ -1,5 +1,5 @@
 --
--- MrTarget v2.0.3
+-- MrTarget v2.0.4
 -- =====================================================================
 -- Copyright (C) 2014 Lock of War, Developmental (Pty) Ltd
 --
@@ -13,7 +13,7 @@
 -- For more information see the README and LICENSE files respectively
 --
 
-local VERSION = 'v2.0.3';
+local VERSION = 'v2.0.4';
 
 local MAX_FRAMES = 15;
 local MAX_AURAS = 5;
@@ -695,10 +695,12 @@ end
 function MrTarget:ObjectivesFrame()
   if ObjectiveTrackerFrame then
     if not InCombatLockdown() then
-      if self.instanceType == 'none' then
-        ObjectiveTrackerFrame:Show();
-      else
+      if self.instanceType == 'pvp' then
         ObjectiveTrackerFrame:Hide();
+      elseif self.instanceType == 'arena' then
+        ObjectiveTrackerFrame:Hide();
+      else
+        ObjectiveTrackerFrame:Show();
       end
     end
   end
