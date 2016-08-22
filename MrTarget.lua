@@ -160,6 +160,11 @@ function MrTarget:GetName(name, insert)
   return name;
 end
 
+function MrTarget:ResetNames()
+  NAME_READABLE = {};
+  NAME_COUNT = 1;
+end
+
 function MrTarget:SplitName(name)
   if name then
     local name, server, original = name, '', name;
@@ -374,16 +379,16 @@ function MrTarget:UpdateArenaScore()
       local id, spec, description, icon, background, role, class = GetSpecializationInfoByID(specid);
       local name = GetUnitName(target);
       if name then
-        name, server = self:SplitName(name);
-        name = self:GetName(name, true)..server;
-      else
-        name = '';
+        table.insert(units, { name=name, target=target, class=class, role=role });
+        numEnemies = numEnemies+1;
       end
-      table.insert(units, { name=name, target=target, class=class, role=role });
-      numEnemies = numEnemies+1;
     end
     if numEnemies > 0 then
       table.sort(units, SortAlphabetically);
+      for i=1, numEnemies do
+         local name, server = self:SplitName(units[i].name);
+         units[i].name = self:GetName(name, true)..server;
+      end
       table.sort(units, SortByRole);
       UNITS = units;
       self:UpdateFrames();
@@ -399,16 +404,18 @@ function MrTarget:UpdateBattlegroundScore()
   if numScores > 0 then
     local units = {};
     for i=1, numScores do
-      local target, _, _, _, _, faction, race, _, class, _, _, _, _, _, _, talents = GetBattlefieldScore(i);
+      local target, _, _, _, _, faction, race, _, class, _, _, _, _, _, _, talent = GetBattlefieldScore(i);
       if faction ~= playerFaction then
-        local spec = ROLES[class][talents];
-        local name, server = self:SplitName(target);
-        table.insert(units, { name=self:GetName(name, true)..server, target=target, class=class, role=spec.role });
+        table.insert(units, { name=target, server=server, target=target, class=class, role=ROLES[class][talent].role });
         numEnemies = numEnemies+1;
       end
     end
     if numEnemies > 0 then
       table.sort(units, SortAlphabetically);
+      for i=1, numEnemies do
+         local name, server = self:SplitName(units[i].name);
+         units[i].name = self:GetName(name, true)..server;
+      end
       table.sort(units, SortByRole);
       UNITS = units;
       REQUEST_FREQUENCY = math.max(REQUEST_FREQUENCY+1, MAX_REQUEST_TIME);
@@ -438,6 +445,7 @@ end
 
 function MrTarget:UpdateFrames()
   local visible = 0;
+  self:ResetNames();
   ENEMIES = {};
   for i=1, MAX_FRAMES do
     if UNITS[i] then
