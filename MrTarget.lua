@@ -1,4 +1,4 @@
--- MrTarget v2.2.2
+-- MrTarget
 -- =====================================================================
 -- Copyright (C) 2014 Lock of War, Developmental (Pty) Ltd
 --
@@ -8,7 +8,7 @@
 -- Please send any bugs or feedback to mrtarget@lockofwar.com.
 -- /run print((select(4, GetBuildInfo())));
 
-local VERSION = 'v2.2.2';
+local VERSION = 'v2.2.3';
 
 local MAX_FRAMES = 15;
 local MAX_AURAS = 9;
@@ -242,14 +242,16 @@ function MrTarget:SetReadableName(name)
 end
 
 function MrTarget:GetReadableName(name)
-  if self.instanceType == 'arena' then
-    return self:SetReadableName(self:SplitName(name));
-  else
+  if name then
     if NAMES[name] then
       return NAMES[name];
+    elseif self.instanceType == 'arena' then
+      return self:SetReadableName(name);
     else
       return name;
     end
+  else
+    return '';
   end
 end
 
@@ -261,21 +263,12 @@ function MrTarget:UnitNameReadable(unit)
   return name, server;
 end
 
-function MrTarget:GetUnitNameReadable(unit, showServerName)
-  local relationship = UnitRealmRelationship(unit);
+function MrTarget:GetUnitNameReadable(unit)
   local name, server = self:UnitNameReadable(unit);
-  if server and server ~= '' then
-    if showServerName then
-      return name..'-'..server;
-    else
-      if relationship == LE_REALM_RELATION_SAME then
-        return name;
-      else
-        return name..FOREIGN_SERVER_LABEL;
-      end
-    end
+  if not server then
+    return name..FOREIGN_SERVER_LABEL;
   else
-    return name;
+    return name, server;
   end
 end
 
@@ -284,8 +277,8 @@ function MrTarget:SplitName(name)
     local name, server, original = name, '', name;
     local hyphen = strfind(original, '-');
     if hyphen then
-        name = strsub(original, 0, hyphen-1)
-        server = '-'..strsub(original, hyphen+1);
+      name = strsub(original, 0, hyphen-1)
+      server = '-'..strsub(original, hyphen+1);
     end
     return name, server;
   else
@@ -296,8 +289,10 @@ end
 function MrTarget:UpdateName(frame, name, server)
   if name then
     name, server = self:SplitName(name);
-    frame.unit.display = self:GetReadableName(name)..server;
-    frame.name:SetText(frame.unit.display);
+    if name and server ~= nil then
+      frame.unit.display = self:GetReadableName(name)..server;
+      frame.name:SetText(frame.unit.display);
+    end
   end
 end
 

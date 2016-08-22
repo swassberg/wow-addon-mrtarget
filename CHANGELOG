@@ -1,9 +1,14 @@
-MrTarget v2.2.2
+MrTarget v2.2.3
 =====================================================================
 Copyright (C) 2014 Lock of War, Developmental (Pty) Ltd
 
 Warlords of Draenor v6.1.2
 ---------------------------------------------------------------------
+16/04/2015
+v2.2.3
+Fixed nil name error in Arena
+Fixed multiple issues with Arena loading
+
 06/04/2015
 v2.2.2
 Fixed missing buff icons
