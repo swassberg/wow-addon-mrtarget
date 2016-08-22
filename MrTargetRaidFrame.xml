@@ -3,7 +3,7 @@
   xsi:schemaLocation="http://www.blizzard.com/wow/ui/..\FrameXML\UI.xsd">
   <Frame name="MrTargetRaidFrameTemplate" inherits="SecureUnitButtonTemplate" toplevel="true" frameStrata="MEDIUM" virtual="true" hidden="true">
     <Anchors>
-      <Anchor point="TOPLEFT" relativeTo="CompactRaidFrameManager" relativePoint="TOPRIGHT" x="120" y="-20"/>
+      <Anchor point="TOPLEFT" relativePoint="TOPRIGHT" x="100" y="150"/>
     </Anchors>
     <Frames>
       <Button name="$parentTargetIcon" parentKey="targetIcon" frameLevel="4" hidden="true">

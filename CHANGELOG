@@ -1,9 +1,29 @@
-MrTarget v2.1.5
+MrTarget v2.2.2
 =====================================================================
 Copyright (C) 2014 Lock of War, Developmental (Pty) Ltd
 
+Warlords of Draenor v6.1.2
+---------------------------------------------------------------------
+06/04/2015
+v2.2.2
+Fixed missing buff icons
+
+02/04/2015
+v2.2.1
+Fixed hide/show /commands
+Fixed CompactRaidManager bug (jbbuena)
+Added player cast debuffs in BGs (teakan)
+Added option to hide power bar (teakan)
+Updated for patch 6.1.2 (60100)
+
 Warlords of Draenor v6.1.0
 ---------------------------------------------------------------------
+25/02/2015
+v2.1.4
+Updated for patch 6.1.0 (60100)
+Fixed targeted count (SantiagoJH90)
+Generally fixed lots of bugs
+
 02/03/2015
 v2.1.5
 Fixed first load bug (seatleson, evilmonkeyz)

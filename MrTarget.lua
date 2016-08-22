@@ -1,4 +1,4 @@
--- MrTarget v2.1.5
+-- MrTarget v2.2.2
 -- =====================================================================
 -- Copyright (C) 2014 Lock of War, Developmental (Pty) Ltd
 --
@@ -8,16 +8,16 @@
 -- Please send any bugs or feedback to mrtarget@lockofwar.com.
 -- /run print((select(4, GetBuildInfo())));
 
-local VERSION = 'v2.1.5';
+local VERSION = 'v2.2.2';
 
 local MAX_FRAMES = 15;
-local MAX_AURAS = 5;
+local MAX_AURAS = 9;
 local LAST_REQUEST = 0;
 local REQUEST_TICK = 1;
 local REQUEST_DELAY = 10;
 local RANGE_TICK = 0.1;
 local RANGE_DELAY = 6;
-
+local HIDDEN = false;
 local FRAMES = {};
 local ENEMIES = {};
 local RANGE = {};
@@ -50,6 +50,7 @@ local PLAYER_CLASS = nil;
 local PLAYER_SPEC = nil;
 local PLAYER_RANGE = nil;
 local PLAYER_TARGET = nil;
+local LEADER_TARGET = nil;
 local BATTLEFIELD = 'BATTLEGROUND';
 local CHAT_PREFIX = 'MrTarget';
 
@@ -57,24 +58,28 @@ local DEFAULT_OPTIONS = {
   VERSION=VERSION,
   BATTLEGROUND={
     ENABLED=true,
-    POSITION={ 'TOPLEFT', 'CompactRaidFrameManager', 'TOPRIGHT', 120, -20 },
+    POSITION={ 'TOPLEFT', nil, 'TOPLEFT', 100, -150 },
     BORDERLESS=false,
     ICONS=true,
     SIZE=100,
     NAMING='Transmute',
+    POWER=true,
     RANGE=true,
     TARGETED=true,
+    DEBUFFS=true,
     MAX_FRAMES=15
   },
   ARENA={
     ENABLED=true,
-    POSITION={ 'TOPLEFT', 'CompactRaidFrameManager', 'TOPRIGHT', 120, -20 },
+    POSITION={ 'TOPLEFT', nil, 'TOPLEFT', 100, -150 },
     BORDERLESS=false,
     ICONS=true,
     SIZE=100,
     NAMING='Transmute',
+    POWER=true,
     RANGE=true,
     TARGETED=true,
+    DEBUFFS=true,
     MAX_FRAMES=5
   }
 };
@@ -263,7 +268,7 @@ function MrTarget:GetUnitNameReadable(unit, showServerName)
     if showServerName then
       return name..'-'..server;
     else
-      if relationship == LE_REALM_RELATION_VIRTUAL then
+      if relationship == LE_REALM_RELATION_SAME then
         return name;
       else
         return name..FOREIGN_SERVER_LABEL;
@@ -416,20 +421,20 @@ function MrTarget:UpdateUnit(unit)
   end
 end
 
-function MrTarget:PlayerTargetUnit(unit, force)
-  if UnitIsEnemy('player', unit) or force then
-    local frame = self:UnitFrame(unit);
-    if frame then
-      if PLAYER_TARGET then
-        self:UpdateTargeted(PLAYER_TARGET, frame.unit.target);
-      end
-      PLAYER_TARGET = frame;
-      self.targetIcon:ClearAllPoints();
-      self.targetIcon:SetPoint('TOPRIGHT', frame, 'TOPLEFT', -4, -2);
-      self.targetIcon:Show();
-      if UnitIsGroupLeader('player') then
-        self:LeaderTargetUnit(unit);
-      end
+function MrTarget:PlayerTargetUnit(unit)
+  local frame = self:UnitFrame(unit);
+  if frame then
+    if PLAYER_TARGET then
+      self:UpdateTargeted(PLAYER_TARGET, frame.unit.target);
+      PLAYER_TARGET.specIcon:SetAlpha(PLAYER_TARGET.name:GetAlpha());
+    end
+    PLAYER_TARGET = frame;
+    self.targetIcon:ClearAllPoints();
+    self.targetIcon:SetPoint('TOPRIGHT', frame, 'TOPLEFT', -4, -2);
+    self.targetIcon:Show();
+    frame.specIcon:SetAlpha(0.5);
+    if UnitIsGroupLeader('player') then
+      self:LeaderTargetUnit(unit);
     end
   else
     self.targetIcon:Hide();
@@ -437,14 +442,21 @@ function MrTarget:PlayerTargetUnit(unit, force)
   end
 end
 
-function MrTarget:LeaderTargetUnit(unit, force)
-  if UnitIsEnemy('player', unit) or force then
-    local frame = self:UnitFrame(unit);
+function MrTarget:LeaderTargetUnit(unit)
+  local frame = self:UnitFrame(unit);
+  if frame then
+    if LEADER_TARGET then
+      self:UpdateTargeted(LEADER_TARGET, frame.unit.target);
+      LEADER_TARGET.specIcon:SetAlpha(LEADER_TARGET.name:GetAlpha());
+    end
+    LEADER_TARGET = frame;
     self.assistIcon:ClearAllPoints();
     self.assistIcon:SetPoint('TOPRIGHT', frame, 'TOPLEFT', -6, -4);
     self.assistIcon:Show();
+    frame.specIcon:SetAlpha(0.5);
   else
     self.assistIcon:Hide();
+    LEADER_TARGET = nil;
   end
 end
 
@@ -530,10 +542,11 @@ function MrTarget:UpdateCastDebuffs(frame, count, unit)
 end
 
 function MrTarget:UpdateAuras(frame, unit)
-  self:HideAuras(frame);
   local count = 1;
+  self:HideAuras(frame);
   if self.instanceType == 'pvp' then
     count = self:UpdateBattlegroundAuras(frame, count, unit);
+    count = self:UpdateCastDebuffs(frame, count, unit);
   elseif self.instanceType == 'arena' then
     count = self:UpdateCastDebuffs(frame, count, unit);
     count = self:UpdateArenaDebuffs(frame, count, unit);
@@ -556,22 +569,30 @@ function MrTarget:UpdateTargeted(frame, unit)
 end
 
 function MrTarget:PlayerDied()
+  for i=1, OPTIONS[BATTLEFIELD].MAX_FRAMES do
+    if FRAMES[i].unit then
+      self:UpdateTargeted(FRAMES[i], FRAMES[i].unit.target);
+      self:UpdateAuras(FRAMES[i], FRAMES[i].unit.target);
+    end
+  end
   self:ResetAlpha(BATTLEFIELD);
   self.targetIcon:Hide();
   self.assistIcon:Hide();
-  if UnitIsGroupLeader('player') then
-    self.assistIcon:Hide();
-  end
 end
 
 function MrTarget:UpdateZone()
   self.inInstance, self.instanceType = IsInInstance();
-  if self.instanceType == 'arena' and OPTIONS.ARENA.ENABLED then
+  if self.instanceType == 'arena' and OPTIONS.ARENA.ENABLED and not HIDDEN then
     self:Initialize('ARENA');
-  elseif self.instanceType == 'pvp' and OPTIONS.BATTLEGROUND.ENABLED then
+  elseif self.instanceType == 'pvp' and OPTIONS.BATTLEGROUND.ENABLED and not HIDDEN then
     self:Initialize('BATTLEGROUND');
-  elseif InterfaceOptionsFrame:IsShown() then
-    self:OpenOptions(BATTLEFIELD);
+  elseif self.instanceType ~= 'pvp' and self.instanceType ~= 'arena' then
+    HIDDEN = false;
+    if InterfaceOptionsFrame:IsShown() then
+      self:OpenOptions(BATTLEFIELD);
+    else
+      self:Destroy();
+    end
   else
     self:Destroy();
   end
@@ -580,13 +601,13 @@ end
 function MrTarget:SetBattlefield()
   if self.battlefield == nil then
     for i=1, GetMaxBattlefieldID() do
-      local status, name = GetBattlefieldStatus(i);
+      local status, name, size = GetBattlefieldStatus(i);
       if status == 'active' then
         local auras = BG_AURAS;
         if self.instanceType == 'pvp' then
           size = select(5, GetBattlefieldTeamInfo(i));
         elseif self.instanceType == 'arena' then
-          size = 2;
+          size = GetNumArenaOpponents();
           auras = ARENA_AURAS;
         end
         self.battlefield = { name=name, size=size, auras=auras };
@@ -652,10 +673,6 @@ function MrTarget:UpdateArenaScore()
       table.sort(units, SortAlphabetically);
       table.sort(units, SortByRole);
       UNITS = units;
-      REQUEST_TICK = math.min(REQUEST_TICK+1, REQUEST_DELAY);
-      if self.battlefield and numEnemies < self.battlefield.size then
-        REQUEST_TICK = 1;
-      end
       self:UpdateFrames();
       if not InCombatLockdown() then
         self:Show();
@@ -691,12 +708,6 @@ function MrTarget:UpdateBattlegroundScore()
       end
       table.sort(units, SortByRole);
       UNITS = units;
-      REQUEST_TICK = math.min(REQUEST_TICK+1, REQUEST_DELAY);
-      if self.battlefield and numEnemies < self.battlefield.size then
-        REQUEST_TICK = 1;
-      elseif REQUEST_TICK == REQUEST_DELAY then
-        self:SetScript('OnUpdate', nil);
-      end
       self:UpdateFrames();
       if not InCombatLockdown() then
         self:Show();
@@ -744,8 +755,10 @@ function MrTarget:UpdateFrames()
       self:UpdateName(FRAMES[i], UNITS[i].name);
       self:UpdateHealthColor(FRAMES[i], UNITS[i].class);
       self:UpdatePowerColor(FRAMES[i], UNITS[i].name);
-      self:UpdateRange(FRAMES[i], UNITS[i].target);
-      self:HideAuras(FRAMES[i]);
+      if self.battlefield then
+        self:UpdateRange(FRAMES[i], UNITS[i].target);
+        self:UpdateAuras(FRAMES[i], UNITS[i].target);
+      end
       if not InCombatLockdown() then
         FRAMES[i]:SetAttribute('macrotext1', '/targetexact '..UNITS[i].target);
         FRAMES[i]:SetAttribute('macrotext2', '/targetexact '..UNITS[i].target..'\n/focus\n/targetlasttarget');
@@ -761,7 +774,7 @@ function MrTarget:UpdateFrames()
     end
   end
   if not InCombatLockdown() then
-    self:SetSize(100, (visible*FRAMES[1]:GetHeight())+13);
+    self:SetSize(100, (visible*FRAMES[1]:GetHeight())+14.5);
   end
 end
 
@@ -881,11 +894,11 @@ function MrTarget:Initialize(battlefield)
     self:RegisterEvent('ARENA_PREP_OPPONENT_SPECIALIZATIONS');
     self:RegisterEvent('UNIT_AURA');
   end
-  self:SetScript('OnUpdate', self.OnUpdate);
   self:DisableOptions('BATTLEGROUND');
   self:DisableOptions('ARENA');
   self:ObjectivesFrame();
-  RequestBattlefieldScoreData();
+  self:SetScript('OnUpdate', self.OnUpdate);
+  self:OnUpdate(GetTime());
 end
 
 function MrTarget:Destroy()
@@ -918,10 +931,13 @@ end
 
 function MrTarget:OnUpdate(time)
   LAST_REQUEST = LAST_REQUEST + time;
-  if REQUEST_TICK == 0 or LAST_REQUEST < REQUEST_TICK or (WorldStateScoreFrame and WorldStateScoreFrame:IsShown()) then
+  if LAST_REQUEST < REQUEST_TICK or (WorldStateScoreFrame and WorldStateScoreFrame:IsShown()) then
     return;
   end
   RequestBattlefieldScoreData();
+  if self.instanceType == 'arena' then
+    self:UpdateArenaScore();
+  end
   LAST_REQUEST = 0;
 end
 
@@ -946,6 +962,12 @@ function MrTarget:UpdateUI(borderless)
   end
 end
 
+function MrTarget:SetPower(enabled)
+  if not self.battlefield then
+    self:UpdateUI(OPTIONS[BATTLEFIELD].BORDERLESS);
+  end
+end
+
 function MrTarget:SetTargeted(enabled)
   if enabled then
     if not self.battlefield then
@@ -954,6 +976,31 @@ function MrTarget:SetTargeted(enabled)
   else
     for i=1, OPTIONS[BATTLEFIELD].MAX_FRAMES do
       FRAMES[i].targeted:SetText('');
+    end
+  end
+end
+
+function MrTarget:FakeDebuff(frame)
+  for a=1, MAX_AURAS do
+    if not frame['auraIcon'..a]:IsShown() then
+      self:SetAura(frame, a, 5025, '', 'Interface\\Icons\\INV_Misc_QuestionMark', 1, GetTime()+(math.random(10, 50)/10));
+      break;
+    end
+  end
+end
+
+function MrTarget:SetDebuffs(enabled)
+  if not self.battlefield then
+    if enabled then
+      self:FakeDebuff(FRAMES[1]);
+    else
+      for a=1, MAX_AURAS do
+        if FRAMES[1]['auraIcon'..a].id == 5025 then
+          FRAMES[1]['auraIcon4'].id = nil;
+          FRAMES[1]['auraIcon4'].icon:SetTexture(nil);
+          FRAMES[1]['auraIcon4']:Hide();
+        end
+      end
     end
   end
 end
@@ -969,11 +1016,19 @@ function MrTarget:SetBorderless()
     FRAMES[i].name:SetFontObject("GameFontHighlightBorderless");
     FRAMES[i].targeted:SetFontObject("TextStatusBarTextRedBorderless");
     FRAMES[i].healthBar:ClearAllPoints();
-    FRAMES[i].healthBar:SetPoint('TOPLEFT', FRAMES[i], 'TOPLEFT', 0, 0);
-    FRAMES[i].healthBar:SetPoint('BOTTOMRIGHT', FRAMES[i], 'BOTTOMRIGHT', 0, 15);
     FRAMES[i].powerBar:ClearAllPoints();
-    FRAMES[i].powerBar:SetPoint('TOPLEFT', FRAMES[i].healthBar, 'BOTTOMLEFT', 0, -1);
-    FRAMES[i].powerBar:SetPoint('BOTTOMRIGHT', FRAMES[i], 'BOTTOMRIGHT', 0, 1);
+    FRAMES[i].healthBar:SetPoint('TOPLEFT', FRAMES[i], 'TOPLEFT', 0, 0);
+    if OPTIONS[BATTLEFIELD].POWER then
+      FRAMES[i].healthBar:SetPoint('BOTTOMRIGHT', FRAMES[i], 'BOTTOMRIGHT', 0, 15);
+      FRAMES[i].powerBar:SetPoint('TOPLEFT', FRAMES[i].healthBar, 'BOTTOMLEFT', 0, -1);
+      FRAMES[i].powerBar:SetPoint('BOTTOMRIGHT', FRAMES[i], 'BOTTOMRIGHT', 0, 1);
+      FRAMES[i].powerBar:Show();
+      FRAMES[i].horizDivider:Show();
+    else
+      FRAMES[i].healthBar:SetPoint('BOTTOMRIGHT', FRAMES[i], 'BOTTOMRIGHT', 0, 1);
+      FRAMES[i].horizDivider:Hide();
+      FRAMES[i].powerBar:Hide();
+    end
     FRAMES[i].spec:Hide();
     if OPTIONS[BATTLEFIELD].ICONS then
       FRAMES[i].specIcon:Show();
@@ -1000,11 +1055,19 @@ function MrTarget:SetStandard()
     FRAMES[i].name:SetFontObject("GameFontHighlight");
     FRAMES[i].targeted:SetFontObject("TextStatusBarTextRed");
     FRAMES[i].healthBar:ClearAllPoints();
-    FRAMES[i].healthBar:SetPoint('TOPLEFT', FRAMES[i], 'TOPLEFT', 1, -1);
-    FRAMES[i].healthBar:SetPoint('BOTTOMRIGHT', FRAMES[i], 'BOTTOMRIGHT', -1, 9);
     FRAMES[i].powerBar:ClearAllPoints();
-    FRAMES[i].powerBar:SetPoint('TOPLEFT', FRAMES[i].healthBar, 'BOTTOMLEFT', 0, -2);
-    FRAMES[i].powerBar:SetPoint('BOTTOMRIGHT', FRAMES[i], 'BOTTOMRIGHT', -1, 1);
+    FRAMES[i].healthBar:SetPoint('TOPLEFT', FRAMES[i], 'TOPLEFT', 1, -1);
+    if OPTIONS[BATTLEFIELD].POWER then
+      FRAMES[i].healthBar:SetPoint('BOTTOMRIGHT', FRAMES[i], 'BOTTOMRIGHT', -1, 9);
+      FRAMES[i].powerBar:SetPoint('TOPLEFT', FRAMES[i].healthBar, 'BOTTOMLEFT', 0, -2);
+      FRAMES[i].powerBar:SetPoint('BOTTOMRIGHT', FRAMES[i], 'BOTTOMRIGHT', -1, 0);
+      FRAMES[i].powerBar:Show();
+      FRAMES[i].horizDivider:Show();
+    else
+      FRAMES[i].healthBar:SetPoint('BOTTOMRIGHT', FRAMES[i], 'BOTTOMRIGHT', -1, 0);
+      FRAMES[i].horizDivider:Hide();
+      FRAMES[i].powerBar:Hide();
+    end
     FRAMES[i].spec:Show();
     FRAMES[i].specIcon:Hide();
     for a=1, MAX_AURAS do
@@ -1014,15 +1077,6 @@ function MrTarget:SetStandard()
     end
   end
   self.borderFrame:Show();
-end
-
-local function RandomKey(t)
-  local keys, i = {}, 1;
-  for k in pairs(t) do
-    keys[i] = k;
-    i = i+1;
-  end
-  return keys[math.random(1, #keys)];
 end
 
 function MrTarget:ResetAlpha(on)
@@ -1036,6 +1090,15 @@ local RUSSIANS = {
   'Афила', 'Сэйбот', 'Яджун', 'Найнс', 'Айвен', 'Аллорион', 'Марги', 'Атжай',
   'Сигр', 'Вайлен', 'Меру', 'Игми', 'Вандерер', 'Биотикус', 'Эксдаркикс'
 };
+
+local function RandomKey(t)
+  local keys, i = {}, 1;
+  for k in pairs(t) do
+    keys[i] = k;
+    i = i+1;
+  end
+  return keys[math.random(1, #keys)];
+end
 
 function MrTarget:OpenOptions(key)
   if not self.battlefield then
@@ -1054,13 +1117,22 @@ function MrTarget:OpenOptions(key)
       end
       table.sort(UNITS, SortByRole);
       self:UpdateFrames();
+      self:HideAuras(FRAMES[1]);
       self:ResetAlpha(OPTIONS[BATTLEFIELD].RANGE);
-      self:SetAura(FRAMES[1], 1, 23333, '', BG_AURAS[23333].icon, 1, 0);
-      self:SetAura(FRAMES[1], 2, 46392, '', BG_AURAS[46392].icon, 1, GetTime()+(math.random(10, 50)/10));
-      self:SetAura(FRAMES[1], 3, 46393, '', BG_AURAS[46393].icon, 1, GetTime()+(math.random(10, 50)/10));
-      self:PlayerTargetUnit('raid1', true);
-      self:LeaderTargetUnit('raid1', true);
+      if BATTLEFIELD == 'BATTLEGROUND' then
+        self:SetAura(FRAMES[1], 1, 23333, '', BG_AURAS[23333].icon, 1, 0);
+        self:SetAura(FRAMES[1], 2, 46392, '', BG_AURAS[46392].icon, 1, GetTime()+(math.random(10, 50)/10));
+        self:SetAura(FRAMES[1], 3, 46393, '', BG_AURAS[46393].icon, 1, GetTime()+(math.random(10, 50)/10));
+      elseif BATTLEFIELD == 'ARENA' then
+        self:FakeDebuff(FRAMES[1]);
+        self:FakeDebuff(FRAMES[1]);
+        self:FakeDebuff(FRAMES[1]);
+      end
+      self:PlayerTargetUnit('raid1');
+      self:LeaderTargetUnit('raid1');
+      self:SetPower(OPTIONS[BATTLEFIELD].POWER);
       self:SetTargeted(OPTIONS[BATTLEFIELD].TARGETED);
+      self:SetDebuffs(OPTIONS[BATTLEFIELD].DEBUFFS);
       self:Show();
     end
   end
@@ -1149,8 +1221,10 @@ end
 function MrTarget:LoadOptions(key, options)
   BATTLEFIELD=key;
   self.Options[key].Enabled:SetChecked(options.ENABLED);
+  self.Options[key].Power:SetChecked(options.POWER);
   self.Options[key].Range:SetChecked(options.RANGE);
   self.Options[key].Targeted:SetChecked(options.TARGETED);
+  self.Options[key].Debuffs:SetChecked(options.DEBUFFS);
   self.Options[key].Borderless:SetChecked(options.BORDERLESS);
   self.Options[key].Icons:SetChecked(options.ICONS);
   self.Options[key].Size:SetValue(options.SIZE);
@@ -1169,8 +1243,10 @@ end
 
 function MrTarget:SaveOptions(key)
   OPTIONS[key].ENABLED = self.Options[key].Enabled:GetChecked();
+  OPTIONS[key].POWER = self.Options[key].Power:GetChecked();
   OPTIONS[key].RANGE = self.Options[key].Range:GetChecked();
   OPTIONS[key].TARGETED = self.Options[key].Targeted:GetChecked();
+  OPTIONS[key].DEBUFFS = self.Options[key].Debuffs:GetChecked();
   OPTIONS[key].BORDERLESS = self.Options[key].Borderless:GetChecked();
   OPTIONS[key].ICONS = self.Options[key].Icons:GetChecked();
   OPTIONS[key].SIZE = self.Options[key].Size:GetValue();
@@ -1187,12 +1263,16 @@ function MrTarget:QuickSave() self:SaveOptions(BATTLEFIELD); end
 
 function MrTarget:DisableOptions(key)
   UIDropDownMenu_DisableDropDown(self.Options[key].Naming);
+  self.Options[key].Power:Disable();
+  self.Options[key].Debuffs:Disable();
   self.Options[key].Borderless:Disable();
   self.Options[key].Icons:Disable();
 end
 
 function MrTarget:EnableOptions(key)
   UIDropDownMenu_EnableDropDown(self.Options[key].Naming);
+  self.Options[key].Power:Enable();
+  self.Options[key].Debuffs:Enable();
   self.Options[key].Borderless:Enable();
   self.Options[key].Icons:Enable();
 end
@@ -1272,7 +1352,7 @@ function MrTarget:OnEvent(event, ...)
     end
   elseif event == 'PLAYER_REGEN_ENABLED' then
     self:UnregisterEvent('PLAYER_REGEN_ENABLED');
-    if self.instanceType == 'none' then
+    if self.instanceType ~= 'pvp' and self.instanceType ~= 'arena' then
       self:Destroy();
     else
       self:Show();
@@ -1331,8 +1411,10 @@ SLASH_MRTARGET1 = '/mrt';
 SLASH_MRTARGET2 = '/mrtarget';
 function SlashCmdList.MRTARGET(cmd, box)
   if cmd == 'show' then
+    HIDDEN = false;
     MrTarget:UpdateZone();
   elseif cmd == 'hide' then
+    HIDDEN = true;
     MrTarget:Destroy();
   else
     InterfaceOptionsFrame_OpenToCategory(MrTarget.Options);
