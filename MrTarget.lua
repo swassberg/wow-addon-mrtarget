@@ -1,4 +1,4 @@
--- MrTarget v3.1.3
+-- MrTarget v3.1.4
 -- =====================================================================
 -- This Work is provided under the Creative Commons
 -- Attribution-NonCommercial-NoDerivatives 4.0 International Public License
@@ -37,6 +37,7 @@ local ENEMIES = {
 MrTarget = CreateFrame('Frame', 'MrTarget', UIParent);
 
 function MrTarget:Load()
+  self.loaded=true;
   self.active=false;
   self.version=DEFAULT_OPTIONS.VERSION;
   self.version_text='v3.1.3';
@@ -88,10 +89,11 @@ function MrTarget:ObjectivesFrame(active)
 end
 
 function MrTarget:PlayerLogin()
-  self.player.NAME = UnitName('player');
-  self.player.CLASS = select(2, UnitClass('player'));
-  self.player.SPEC = select(2, GetSpecializationInfo(GetSpecialization()));
-  self.player.FACTION = GetBattlefieldArenaFaction();
+  if self.loaded then
+    self.player.NAME = UnitName('player');
+    self.player.CLASS = select(2, UnitClass('player'));
+    self.player.FACTION = GetBattlefieldArenaFaction();
+  end
 end
 
 function MrTarget:HelloWorld()
