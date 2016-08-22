@@ -1,38 +1,29 @@
 --
--- MrTarget v2.0.4
+-- MrTarget v2.1.2
 -- =====================================================================
 -- Copyright (C) 2014 Lock of War, Developmental (Pty) Ltd
---
--- MrT provides Blizzard style PVP ENEMY Unit Frames and Replaces UNREADABLE Player Names for Target Calling purposes
---
--- Please send any bugs or feedback to mrtarget@lockofwar.com.
 --
 -- This Work is provided under the Creative Commons
 -- Attribution-NonCommercial-NoDerivatives 4.0 International Public License
 --
--- For more information see the README and LICENSE files respectively
+-- Please send any bugs or feedback to mrtarget@lockofwar.com.
 --
 
-local VERSION = 'v2.0.4';
+local VERSION = 'v2.1.2';
 
-local MAX_FRAMES = 15;
 local MAX_AURAS = 5;
 local LAST_REQUEST = 0;
-local REQUEST_FREQUENCY = 1;
-local MAX_REQUEST_TIME = 10;
+local REQUEST_TICK = 1;
+local REQUEST_DELAY = 10;
+local RANGE_TICK = 0.1;
+local RANGE_DELAY = 6;
 
 local FRAMES = {};
 local ENEMIES = {};
+local RANGE = {};
 local UNITS = {};
+local NAMES = {};
 local ROLES = {};
-
-local POWER_BAR_COLORS = {
-  ['MANA']={ r=0.00,g=0.00,b=1.00 };
-  ['RAGE']={ r=1.00,g=0.00,b=0.00 };
-  ['FOCUS']={ r=1.00,g=0.50,b=0.25 };
-  ['ENERGY']={ r=1.00,g=1.00,b=0.00 };
-  ['CHI']={ r=0.71,g=1.0,b=0.92 };
-}
 
 local MAX_CLASSES = MAX_CLASSES;
 local RAID_CLASS_COLORS = RAID_CLASS_COLORS;
@@ -49,58 +40,50 @@ local GetSpecializationRoleByID = GetSpecializationRoleByID;
 local GetSpecializationInfo = GetSpecializationInfo;
 local GetSpecialization = GetSpecialization;
 local CheckInteractDistance = CheckInteractDistance;
+local GetSpellBookItemName = GetSpellBookItemName;
+local GetSpellInfo = GetSpellInfo;
+local IsSpellInRange = IsSpellInRange;
+local IsHarmfulSpell = IsHarmfulSpell;
 
-local CHAT_CHANNEL = 'INSTANCE_CHAT';
+local PLAYER_NAME = nil;
+local PLAYER_CLASS = nil;
+local PLAYER_SPEC = nil;
+local PLAYER_RANGE = nil;
+local BATTLEFIELD = 'BATTLEGROUND';
 local CHAT_PREFIX = 'MrTarget';
 
 local DEFAULT_OPTIONS = {
-  ['ARENA']=true,
-  ['BATTLEGROUNDS']=true,
-  ['SIZE']=100,
-  ['SET']='Pokemon',
-  ['MAX_FRAMES']=15,
-  ['MAX_AURAS']=5,
-  ['RENAME']=true
-};
-
-local NAME_ACTIVE = true;
-local NAME_COUNT = 1;
-local NAME_READABLE = {};
-
-local NAME_SETS = {
-  ['Pokemon'] = {
-    'Pikachu', 'Bellsprout', 'Zubat', 'Bulbasaur', 'Charmander', 'Diglett', 'Slowpoke', 'Squirtle', 'Oddish', 'Geodude',
-    'Mew', 'Gastly', 'Onix', 'Golduck', 'Spearow', 'Butterfree', 'Charizard', 'Graveler', 'Psyduck', 'Meowth',
-    'Krabby', 'Mankey', 'Rattata', 'Metapod', 'Alakazam', 'Pidgeotto', 'Poliwag', 'Kadabra',  'Primeape', 'Caterpie',
-    'Gloom', 'Raichu', 'Golem', 'Sandshrew', 'Kakuna', 'Tentacool', 'Vulpix', 'Weedle', 'Jigglypuff', 'Blastoise'
+  VERSION=VERSION,
+  BATTLEGROUND={
+    ENABLED=true,
+    POSITION={ 'TOPLEFT', 'CompactRaidFrameManager', 'TOPRIGHT', 120, -20 },
+    BORDERLESS=false,
+    ICONS=true,
+    SIZE=100,
+    NAMING='Transmute',
+    RANGE=true,
+    MAX_FRAMES=15
   },
-  ['Heroes'] = {
-    'Kerrigan', 'Tychus', 'Tyrael', 'Diablo', 'Zeratul', 'Malfurian', 'Rexxar', 'Jaina', 'Uther', 'Anduin',
-    'Valeera', 'Thrall', 'Guldan', 'Garrosh', 'Jaraxxus', 'Sylvanas', 'Baine', 'Voljin', 'Varian', 'Illidan',
-    'Raynor', 'Arthas', 'Tassadar', 'Nova', 'Deckard', 'Leoric', 'Izual', 'Alexstrasza', 'Ysera', 'Onyxia',
-    'Deathwing', 'Malygos', 'Azmodan', 'Aegwynn', 'Cairne', 'Gelbin', 'Jastor', 'Rhonin', 'Tirion', 'Wrathion'
-  },
-  ['Mythology'] = {
-    'Zeus', 'Cerberus', 'Apollo', 'Kronos', 'Athena', 'Agamemnon', 'Hades', 'Perseus', 'Hermes', 'Poseidon',
-    'Artemis', 'Ares', 'Erebus', 'Gaia', 'Tartarus', 'Cyclops', 'Odysseus', 'Aphrodite', 'Mormo', 'Dionysus',
-    'Helios', 'Nyx', 'Iris', 'Orpheus', 'Hector', 'Heracles', 'Ajax', 'Electra', 'Hypnos', 'Hecuba',
-    'Hera', 'Hecuba', 'Theseus', 'Diomedes', 'Achilles', 'Chimera', 'Bellerophon', 'Jason', 'Midas', 'Helen'
-  },
-  ['Xmen'] = {
-    'ProfessorX', 'Cyclops', 'Iceman', 'Archangel', 'Beast', 'Phoenix', 'Mimic', 'Changeling', 'Polaris', 'Havok',
-    'Nightcrawler', 'Wolverine', 'Banshee', 'Storm', 'Sunfire', 'Colossus', 'Thunderbird', 'Rogue', 'Magneto', 'Gambit',
-    'Jubilee', 'Bishop', 'Juggernaut', 'Mystique', 'Warpath', 'Sabretooth', 'Vulcan', 'Shadowcat', 'Lockhead', 'Northstar',
-    'Karma', 'Magma', 'Magik', 'Domino', 'Cypher', 'Frenzy', 'Legion', 'Warbird', 'Blink', 'Mirage'
-  },
-  ['Justice'] = {
-    'Superman', 'Batman', 'WonderWoman', 'Flash', 'GreenLantern', 'Aquaman', 'Manhunter', 'Atom', 'Hawkman', 'Stargirl',
-    'Catwoman', 'Zatanna', 'Firestorm', 'Steel', 'Vixen', 'Vibe', 'Gypsy', 'Huntress', 'DoctorFate', 'Lightray',
-    'Orion', 'Kasumi', 'Maxima', 'Zauriel', 'Obsidian', 'Bloodwynd', 'Metamorpho', 'PowerGirl', 'CrimsonFox', 'Icemaiden',
-    'Nuklon', 'Cluemaster', 'Shazam', 'Cyborg', 'Olympian', 'Godiva', 'Firehawk', 'Bulleteer', 'BigBarda', 'Oracle'
+  ARENA={
+    ENABLED=true,
+    POSITION={ 'TOPLEFT', 'CompactRaidFrameManager', 'TOPRIGHT', 120, -20 },
+    BORDERLESS=false,
+    ICONS=true,
+    SIZE=100,
+    NAMING='Transmute',
+    RANGE=true,
+    MAX_FRAMES=5
   }
 };
 
-local NAME_OPTIONS = NAME_SETS[DEFAULT_OPTIONS.SET];
+local POWER_BAR_COLORS = {
+  MANA={ r=0.00,g=0.00,b=1.00 },
+  RAGE={ r=1.00,g=0.00,b=0.00 },
+  FOCUS={ r=1.00,g=0.50,b=0.25 },
+  ENERGY={ r=1.00,g=1.00,b=0.00 },
+  CHI={ r=0.71,g=1.0,b=0.92 },
+  RUNES={ r=0.50,g=0.50,b=0.50 }
+};
 
 local BG_AURAS = {
    [23333]={ name='Horde Flag', icon='Interface\\Icons\\INV_BannerPVP_01' },
@@ -143,9 +126,26 @@ for i=1, #ARENA_AURAS_TEMP do
   ARENA_AURAS[ARENA_AURAS_TEMP[i]] = { name=name, icon=icon };
 end
 
+local RANGE_SPELLS = {
+  WARRIOR=355, PALADIN=20271, HUNTER=75, ROGUE=1725, PRIEST=589, DEATHKNIGHT=49576,
+  SHAMAN=403, MAGE=44614, WARLOCK=686, MONK=115546, DRUID=5176
+};
+
+local LFGRoleTexCoords = { TANK={ 0.5,0.75,0,1 }, DAMAGER={ 0.25,0.5,0,1 }, HEALER={ 0.75,1,0,1 }};
+
+local function GetTexCoordsForRole(role, borderless)
+  local c = borderless and LFGRoleTexCoords[role] or {GetTexCoordsForRoleSmallCircle(role)};
+  return unpack(c);
+end
+
 local MrTarget = CreateFrame('Frame', 'MrTarget', UIParent, 'MrTargetRaidFrameTemplate');
 
+function MrTarget:SayHello()
+  ChatFrame1:AddMessage('|cFF00FFFF <MrTarget>|cFFFF0000 Even the Score.|r Type /mrt for interface options.', 0, 0, 0, GetChatTypeIndex('SYSTEM'));
+end
+
 function MrTarget:OnLoad()
+  self:SayHello();
   self:GetRoles();
   self:RegisterForDrag('RightButton');
   self:SetClampedToScreen(true);
@@ -153,18 +153,92 @@ function MrTarget:OnLoad()
   self:SetMovable(true);
   self:SetUserPlaced(true);
   self:CreateFrames();
+  self:RegisterEvent('PLAYER_LOGIN');
   self:RegisterEvent('PLAYER_LOGOUT');
   self:RegisterEvent('PARTY_MEMBERS_CHANGED');
   self:RegisterEvent('ZONE_CHANGED_NEW_AREA');
   self:RegisterEvent('CHAT_MSG_ADDON');
-  self:OptionsFrame();
+  self:InitOptions();
   self:UpdateZone();
+end
+
+local NAME_COUNT = 1;
+local NAME_OPTIONS = {
+  'Pikachu', 'Bellsprout', 'Zubat', 'Bulbasaur', 'Charmander', 'Diglett', 'Slowpoke', 'Squirtle', 'Oddish', 'Geodude',
+  'Mew', 'Gastly', 'Onix', 'Golduck', 'Spearow', 'Butterfree', 'Charizard', 'Graveler', 'Psyduck', 'Meowth',
+  'Krabby', 'Mankey', 'Rattata', 'Metapod', 'Alakazam', 'Pidgeotto', 'Poliwag', 'Kadabra',  'Primeape', 'Caterpie',
+  'Gloom', 'Raichu', 'Golem', 'Sandshrew', 'Kakuna', 'Tentacool', 'Vulpix', 'Weedle', 'Jigglypuff', 'Blastoise'
+};
+
+function MrTarget:Transmute(name)
+  if self:IsUTF8(name) then
+    name = NAME_OPTIONS[NAME_COUNT];
+    NAME_COUNT=NAME_COUNT+1;
+  end
+  return name;
+end
+
+local CYRILLIC = {
+  ["А"]="A", ["а"]="a", ["Б"]="B", ["б"]="b", ["В"]="V", ["в"]="v", ["Г"]="G", ["г"]="g", ["Д"]="D", ["д"]="d", ["Е"]="E",
+  ["е"]="e", ["Ё"]="E", ["ё"]="e", ["Ж"]="Zh", ["ж"]="zh", ["З"]="Z", ["з"]="z", ["И"]="I", ["и"]="i", ["Й"]="I", ["й"]="i",
+  ["К"]="K", ["к"]="k", ["Л"]="L", ["л"]="l", ["М"]="M", ["м"]="m", ["Н"]="N", ["н"]="n", ["О"]="O", ["о"]="o", ["П"]="P", ["п"]="p",
+  ["Р"]="R",["р"]="r", ["С"]="S", ["с"]="s", ["Т"]="T", ["т"]="t", ["У"]="U", ["у"]="u", ["Ф"]="F", ["ф"]="f", ["Х"]="Kh", ["х"]="kh",
+  ["Ц"]="Ts", ["ц"]="ts", ["Ч"]="Ch", ["ч"]="ch", ["Ш"]="Sh", ["ш"]="sh", ["Щ"]="Shch", ["щ"]="shch", ["Ъ"]="Ie", ["ъ"]="ie",
+  ["Ы"]="Y", ["ы"]="y", ["Ь"]="X", ["ь"]="x", ["Э"]="E", ["э"]="e", ["Ю"]="Iu", ["ю"]="iu", ["Я"]="Ia", ["я"]="ia"
+};
+
+function MrTarget:ResetNames()
+  NAME_COUNT = 1;
+  wipe(NAMES);
+end
+
+function MrTarget:Transliterate(name)
+  if name then
+    for c, r in pairs(CYRILLIC) do
+      name = string.gsub(name, c, r);
+    end
+  end
+  return name;
+end
+
+function MrTarget:IsUTF8(name)
+  local c,a,n,i = nil,nil,0,1;
+  while true do
+    c = string.sub(name,i,i);
+    i = i + 1;
+    if c == '' then
+        break;
+    end
+    a = string.byte(c);
+    if a > 191 or a < 127 then
+        n = n + 1;
+    end
+  end
+  return (strlen(name) > n*1.5);
+end
+
+function MrTarget:SetReadableName(name)
+  if name then
+    NAMES[name] = name;
+    if OPTIONS[BATTLEFIELD].NAMING == 'Transmute' then
+      NAMES[name] = self:Transmute(name);
+    elseif OPTIONS[BATTLEFIELD].NAMING == 'Transliterate' then
+      NAMES[name] = self:Transliterate(name);
+    end
+    return NAMES[name];
+  else
+    return '';
+  end
+end
+
+function MrTarget:GetReadableName(name)
+  return NAMES[name] or name;
 end
 
 function MrTarget:UnitNameReadable(unit)
   local name, server = UnitName(unit);
   if UnitIsEnemy('player', unit) then
-    name = MrTarget:GetName(name, false);
+    name = MrTarget:GetReadableName(name);
   end
   return name, server;
 end
@@ -187,38 +261,6 @@ function MrTarget:GetUnitNameReadable(unit, showServerName)
   end
 end
 
-function MrTarget:GetName(name, insert)
-  if NAME_ACTIVE and name then
-    if NAME_READABLE[name] == nil then
-      if insert then
-        if OPTIONS.RENAME and NAME_OPTIONS[NAME_COUNT] and self:IsUTF8(name) then
-          NAME_READABLE[name] = NAME_OPTIONS[NAME_COUNT];
-          NAME_COUNT = NAME_COUNT+1;
-        else
-          NAME_READABLE[name] = name;
-        end
-        return NAME_READABLE[name];
-      else
-        return name;
-      end
-    else
-      return NAME_READABLE[name];
-    end
-  end
-  return name;
-end
-
-function MrTarget:GetNextName(name)
-  NAME_READABLE[name] = NAME_OPTIONS[NAME_COUNT];
-  NAME_COUNT = NAME_COUNT+1;
-  return NAME_READABLE[name];
-end
-
-function MrTarget:ResetNames()
-  NAME_READABLE = {};
-  NAME_COUNT = 1;
-end
-
 function MrTarget:SplitName(name)
   if name then
     local name, server, original = name, '', name;
@@ -229,36 +271,114 @@ function MrTarget:SplitName(name)
     end
     return name, server;
   else
-    return name;
+    return '', '';
   end
 end
 
-function MrTarget:IsUTF8(name)
-    local c,a,n,i = nil,nil,0,1;
-    while true do
-        c = string.sub(name,i,i);
-        i = i + 1;
-        if c == '' then
-            break;
-        end
-        a = string.byte(c);
-        if a > 191 or a < 127 then
-            n = n + 1;
-        end
-    end
-    return (strlen(name) > n*1.5);
+function MrTarget:UpdateName(frame, unit)
+  local name, server = GetUnitName(unit, true);
+  if name then
+    name, server = self:SplitName(name);
+    frame.unit.display = self:GetReadableName(name)..server;
+    frame.name:SetText(frame.unit.display);
+  end
 end
 
 function MrTarget:UpdatePowerColor(frame, unit)
   local powerType, powerToken = UnitPowerType(unit);
-  local color = POWER_BAR_COLORS[powerToken] or POWER_BAR_COLORS['MANA'];
-  frame.powerBar:SetStatusBarColor(color.r, color.g, color.b);
+  local color = POWER_BAR_COLORS[powerToken] or POWER_BAR_COLORS.MANA;
+  if color then
+    frame.powerBar:SetStatusBarColor(color.r, color.g, color.b);
+  end
 end
 
 function MrTarget:UpdateHealthColor(frame, classToken)
   local color = RAID_CLASS_COLORS[classToken];
   frame.healthBar:SetStatusBarColor(color.r, color.g, color.b);
   frame.healthBar.r, frame.healthBar.g, frame.healthBar.b = color.r, color.g, color.b;
+end
+
+function MrTarget:UpdateRange(frame, unit)
+  RANGE[frame.unit.name] = GetTime();
+  if OPTIONS[BATTLEFIELD].RANGE then
+    if not UnitIsConnected(unit) or UnitIsDeadOrGhost(unit) then
+      self:SetTransparency(frame, 0.5);
+    elseif IsSpellInRange(RANGE_SPELLS[PLAYER_CLASS], 'spell', unit) or CheckInteractDistance(unit, 1)  then
+      self:SetTransparency(frame, 1.0);
+    else
+      self:SetTransparency(frame, 0.5);
+    end
+  end
+end
+
+function MrTarget:CheckRangeDelay()
+  for i=1, OPTIONS[BATTLEFIELD].MAX_FRAMES do
+    if FRAMES[i].unit then
+      local time = RANGE[FRAMES[i].unit.name];
+      if not time or time+RANGE_DELAY <= GetTime() then
+        self:SetTransparency(FRAMES[i], 0.5);
+      end
+    end
+  end
+end
+
+function MrTarget:CheckRange(fullname, range, time)
+  if fullname then
+    local frame = self:GetFrame(fullname)
+    if frame then
+      RANGE[frame.unit.name] = time;
+      if range > 0 and range <= PLAYER_RANGE then
+        self:SetTransparency(frame, 1.0);
+      end
+    end
+  end
+end
+
+function MrTarget:ParseCombatEvent(source, sourceflags, target, targetflags, range, time)
+  if sourceflags and bit.band(sourceflags, COMBATLOG_OBJECT_TYPE_PLAYER) then
+    if source and CheckInteractDistance(source, 1) then
+      self:CheckRange(target, range, time);
+      if bit.band(sourceflags, COMBATLOG_OBJECT_REACTION_HOSTILE) then
+        self:CheckRange(source, 28, time);
+      end
+    end
+  end
+end
+
+function MrTarget:CombatEvent(...)
+  local time = GetTime();
+  local _, event, _, _, source, sourceflags, _, _, target, targetflags, _, spell = ...;
+  if source ~= target and spell then
+    local range = select(6, GetSpellInfo(spell));
+    if range then
+      if target == PLAYER_NAME then
+        self:CheckRange(source, range, time);
+      elseif bit.band(sourceflags, COMBATLOG_OBJECT_REACTION_HOSTILE) then
+        self:ParseCombatEvent(source, sourceflags, target, targetflags, range, time);
+      end
+    end
+  end
+  self:CheckRangeDelay();
+end
+
+function MrTarget:SetTransparency(frame, alpha)
+  frame.name:SetAlpha(alpha);
+  frame.specIcon:SetAlpha(alpha);
+  frame.spec:SetAlpha(alpha);
+  self:SetStatusBarAlpha(frame.healthBar, alpha);
+  self:SetStatusBarAlpha(frame.powerBar, alpha);
+end
+
+function MrTarget:SetStatusBarAlpha(statusBar, alpha)
+  local r,g,b,a = statusBar:GetStatusBarColor();
+  statusBar:SetStatusBarColor(r,g,b,alpha);
+end
+
+function MrTarget:ResetAlpha(on)
+  local alpha = (on and 0.5) or 1.0;
+  for i=1, OPTIONS[BATTLEFIELD].MAX_FRAMES do
+    self:SetTransparency(FRAMES[i], alpha);
+  end
 end
 
 function MrTarget:GetUnit(unit)
@@ -272,23 +392,6 @@ function MrTarget:GetUnit(unit)
   end
 end
 
-function MrTarget:UpdateName(unit, frame)
-  local name, server = GetUnitName(unit, true);
-  if name then
-    name, server = self:SplitName(name);
-    frame.unit.name = self:GetName(name)..server;
-    frame.name:SetText(frame.unit.name);
-  end
-end
-
-function MrTarget:UpdateRange(unit, frame)
-  -- if CheckInteractDistance(unit, 1) then
-  --   frame:SetAlpha(1);
-  -- else
-  --   frame:SetAlpha(0.4);
-  -- end
-end
-
 function MrTarget:UpdateUnit(unit)
   unit = self:GetUnit(unit);
   if UnitIsEnemy('player', unit) then
@@ -298,31 +401,24 @@ function MrTarget:UpdateUnit(unit)
         frame.unit.uid = UnitGUID(unit);
         ENEMIES[frame.unit.uid] = ENEMIES[unit];
       end
-      frame:SetAlpha(1);
-      self:UpdateName(unit, frame);
-      self:UpdateRange(unit, frame);
+      self:UpdateName(frame, unit);
       self:UpdateHealthColor(frame, frame.unit.class);
       frame.healthBar:SetMinMaxValues(0, UnitHealthMax(unit));
       frame.healthBar:SetValue(UnitHealth(unit));
       self:UpdatePowerColor(frame, unit);
       frame.powerBar:SetMinMaxValues(0, UnitPowerMax(unit));
       frame.powerBar:SetValue(UnitPower(unit));
-      self:UpdateAuras(unit);
-      if UnitIsDeadOrGhost(unit) then
-        frame.healthBar:SetValue(0);
-        self:Wait(30, (function(f)
-          self:UnitDied(f);
-        end), frame);
-      end
+      self:UpdateRange(frame, unit);
+      self:UpdateAuras(frame, unit);
     end
   end
 end
 
-function MrTarget:PlayerTargetUnit(unit, debug)
-  if UnitIsEnemy('player', unit) or debug then
+function MrTarget:PlayerTargetUnit(unit)
+  if UnitIsEnemy('player', unit) then
     local frame = self:UnitFrame(unit);
     self.targetIcon:ClearAllPoints();
-    self.targetIcon:SetPoint('TOPRIGHT', frame, 'TOPLEFT', -8, -2);
+    self.targetIcon:SetPoint('TOPRIGHT', frame, 'TOPLEFT', -4, -2);
     self.targetIcon:Show();
     if UnitIsGroupLeader('player') then
       self:LeaderTargetUnit(unit);
@@ -332,11 +428,11 @@ function MrTarget:PlayerTargetUnit(unit, debug)
   end
 end
 
-function MrTarget:LeaderTargetUnit(unit, debug)
-  if UnitIsEnemy('player', unit) or debug then
+function MrTarget:LeaderTargetUnit(unit)
+  if UnitIsEnemy('player', unit) then
     local frame = self:UnitFrame(unit);
     self.assistIcon:ClearAllPoints();
-    self.assistIcon:SetPoint('TOPRIGHT', frame, 'TOPLEFT', -10, -4);
+    self.assistIcon:SetPoint('TOPRIGHT', frame, 'TOPLEFT', -6, -4);
     self.assistIcon:Show();
   else
     self.assistIcon:Hide();
@@ -352,11 +448,13 @@ function MrTarget:UpdateTarget(unit)
 end
 
 function MrTarget:UpdateState()
-  for i=1, MAX_FRAMES do
+  for i=1, OPTIONS[BATTLEFIELD].MAX_FRAMES do
     for f=1, 5 do
       self:UpdateUnit('arena'..f);
     end
   end
+  self:UpdateTarget('player');
+  self:UpdateTarget('raid1');
 end
 
 function MrTarget:HideAuras(frame)
@@ -424,32 +522,20 @@ function MrTarget:UpdateCastDebuffs(frame, count, unit)
   return count;
 end
 
-function MrTarget:UpdateAuras(unit)
-  if UnitIsEnemy('player', unit) then
-    local count = 1;
-    local frame, key = self:UnitFrame(unit);
-    if frame then
-      self:HideAuras(frame);
-      if self.instanceType == 'pvp' then
-        count = self:UpdateBattlegroundAuras(frame, count, unit);
-      elseif self.instanceType == 'arena' then
-        count = self:UpdateCastDebuffs(frame, count, unit);
-        count = self:UpdateArenaDebuffs(frame, count, unit);
-      end
-    end
+function MrTarget:UpdateAuras(frame, unit)
+  self:HideAuras(frame);
+  local count = 1;
+  if self.instanceType == 'pvp' then
+    count = self:UpdateBattlegroundAuras(frame, count, unit);
+  elseif self.instanceType == 'arena' then
+    count = self:UpdateCastDebuffs(frame, count, unit);
+    count = self:UpdateArenaDebuffs(frame, count, unit);
   end
 end
 
 function MrTarget:PlayerDied()
   self.targetIcon:Hide();
-end
-
-function MrTarget:UnitDied(frame)
-  if frame and frame.healthBar:GetValue() == 0 then
-    frame.healthBar:SetValue(select(2, frame.healthBar:GetMinMaxValues()));
-    frame.powerBar:SetValue(select(2, frame.powerBar:GetMinMaxValues()));
-    frame:SetAlpha(0.4);
-  end
+  self:ResetAlpha(BATTLEFIELD);
 end
 
 function MrTarget:UpdateZone()
@@ -457,12 +543,12 @@ function MrTarget:UpdateZone()
     self:Hide();
   end
   self.inInstance, self.instanceType = IsInInstance();
-  if self.instanceType == 'pvp' and OPTIONS.BATTLEGROUNDS then
-    self:Initialize();
-  elseif self.instanceType == 'arena' and OPTIONS.ARENA then
-    self:Initialize();
+  if self.instanceType == 'pvp' and OPTIONS.BATTLEGROUND.ENABLED then
+    self:Initialize('BATTLEGROUND');
+  elseif self.instanceType == 'arena' and OPTIONS.ARENA.ENABLED then
+    self:Initialize('ARENA');
   elseif InterfaceOptionsFrame:IsShown() then
-    self:OpenDebugFrame();
+    self:OpenOptions(BATTLEFIELD);
   else
     self:Destroy();
   end
@@ -529,16 +615,20 @@ function MrTarget:UpdateArenaScore()
     if spec then
       local target = 'arena'..i;
       local name = GetUnitName(target) or 'Unknown';
-      table.insert(units, { uid=target, name=name, target=target, class=class, spec=spec, role=role });
+      table.insert(units, {
+        uid=target, name=name, display=name, target=target, class=class, spec=spec,
+        role=role, icon=ROLES[class][spec].icon
+      });
       numEnemies = numEnemies+1;
     end
   end
   if numEnemies > 0 then
+    self:ResetNames();
     table.sort(units, SortAlphabetically);
     for i=1, numEnemies do
-      if units[i].name ~= 'Unknown' then
+      if units[i].name and units[i].name ~= 'Unknown' then
         local name, server = self:SplitName(units[i].name);
-        units[i].name = self:GetName(name, true)..server;
+        units[i].display = self:SetReadableName(name)..server;
       end
     end
     table.sort(units, SortByRole);
@@ -560,7 +650,10 @@ function MrTarget:UpdateBattlegroundScore()
     for i=1, numScores do
       local target, _, _, _, _, faction, race, _, class, _, _, _, _, _, _, spec = GetBattlefieldScore(i);
       if faction ~= playerFaction then
-        table.insert(units, { uid=target, name=target, target=target, class=class, spec=spec, role=ROLES[class][spec].role });
+        table.insert(units, {
+          uid=target, name=target, display=target, target=target, class=class, spec=spec,
+          role=ROLES[class][spec].role, icon=ROLES[class][spec].icon
+        });
         numEnemies = numEnemies+1;
       end
     end
@@ -569,14 +662,14 @@ function MrTarget:UpdateBattlegroundScore()
       table.sort(units, SortAlphabetically);
       for i=1, numEnemies do
          local name, server = self:SplitName(units[i].name);
-         units[i].name = self:GetName(name, true)..server;
+         units[i].display = self:SetReadableName(name)..server;
          units[i].uid = units[i].name;
       end
       table.sort(units, SortByRole);
       UNITS = units;
-      REQUEST_FREQUENCY = math.max(REQUEST_FREQUENCY+1, MAX_REQUEST_TIME);
+      REQUEST_TICK = math.max(REQUEST_TICK+1, REQUEST_DELAY);
       if self.battlefield and numEnemies < self.battlefield.size then
-        REQUEST_FREQUENCY = 1;
+        REQUEST_TICK = 1;
       end
       self:UpdateFrames();
       if not InCombatLockdown() then
@@ -601,7 +694,7 @@ function MrTarget:UnitFrame(unit)
   if not ENEMIES[uid] then
     uid = UnitGUID(unit);
     if self.instanceType == 'pvp' then
-      uid = self:GetUnitNameReadable(unit, true);
+      uid = GetUnitName(unit, true);
     end
   end
   return self:GetFrame(uid);
@@ -609,15 +702,14 @@ end
 
 function MrTarget:UpdateFrames()
   local visible = 0;
-  ENEMIES = {};
-  for i=1, MAX_FRAMES do
+  wipe(ENEMIES);
+  for i=1, OPTIONS[BATTLEFIELD].MAX_FRAMES do
     if UNITS[i] then
       FRAMES[i].unit = UNITS[i];
-      FRAMES[i].name:SetText(UNITS[i].name);
+      FRAMES[i].name:SetText(UNITS[i].display);
       FRAMES[i].spec:SetText(UNITS[i].spec);
-      if UNITS[i].role then
-        FRAMES[i].roleIcon.icon:SetTexCoord(GetTexCoordsForRoleSmallCircle(UNITS[i].role));
-      end
+      FRAMES[i].specIcon:SetTexture(UNITS[i].icon);
+      FRAMES[i].roleIcon.icon:SetTexCoord(GetTexCoordsForRole(UNITS[i].role, OPTIONS[BATTLEFIELD].BORDERLESS));
       self:UpdateHealthColor(FRAMES[i], UNITS[i].class);
       self:UpdatePowerColor(FRAMES[i], UNITS[i].name);
       self:HideAuras(FRAMES[i]);
@@ -636,12 +728,12 @@ function MrTarget:UpdateFrames()
     end
   end
   if not InCombatLockdown() then
-    self:SetSize(100, visible*36+14);
+    self:SetSize(100, (visible*FRAMES[1]:GetHeight())+13);
   end
 end
 
 function MrTarget:CreateFrames()
-  for i=1, MAX_FRAMES do
+  for i=1, OPTIONS[BATTLEFIELD].MAX_FRAMES do
     if FRAMES[i] == nil then
       FRAMES[i] = CreateFrame('Button', 'MrTargetUnitFrame'..i, self, 'MrTargetUnitFrameTemplate');
       FRAMES[i]:EnableMouse(true);
@@ -680,14 +772,33 @@ function MrTarget:OnLeave(frame)
   -- GameTooltip:Hide();
 end
 
+function MrTarget:UpdatePlayer()
+  PLAYER_NAME = UnitName('player');
+  PLAYER_CLASS = select(2, UnitClass('player'));
+  PLAYER_SPEC = GetSpecialization();
+  PLAYER_RANGE = select(6, GetSpellInfo(RANGE_SPELLS[PLAYER_CLASS])) or 0;
+  local specId = GetSpecializationInfo(PLAYER_SPEC);
+  if SPEC_CORE_ABILITY_DISPLAY[specId] then
+    for i, id in pairs(SPEC_CORE_ABILITY_DISPLAY[specId]) do
+      local name, _, _, _, _, range = GetSpellInfo(id);
+      if IsHarmfulSpell(name) then
+        if range >= PLAYER_RANGE then
+          RANGE_SPELLS[PLAYER_CLASS] = id;
+          PLAYER_RANGE = range;
+        end
+      end
+    end
+  end
+end
+
 function MrTarget:GetRoles()
   for classID=1, MAX_CLASSES do
-    local _, classTag, classID = GetClassInfoByID(classID);
+    local className, classTag, classID = GetClassInfoByID(classID);
     local numTabs = GetNumSpecializationsForClassID(classID);
     ROLES[classTag] = {};
     for i=1, numTabs do
       local id, name, description, icon, background, role = GetSpecializationInfoForClassID(classID, i);
-      ROLES[classTag][name] = { role=role, id=id, description=description, icon=icon, spec=name };
+      ROLES[classTag][name] = { class=className, role=role, id=id, description=description, icon=icon, spec=name };
     end
   end
 end
@@ -706,20 +817,33 @@ function MrTarget:ObjectivesFrame()
   end
 end
 
-function MrTarget:Initialize()
-  UNITS = {};
+function MrTarget:Reset()
+  LAST_REQUEST = 0;
+  self:ResetNames();
+  wipe(UNITS);
+  wipe(ENEMIES);
+  wipe(RANGE);
+end
+
+function MrTarget:Initialize(battlefield)
+  BATTLEFIELD = battlefield;
+  self:LoadOptions(BATTLEFIELD, OPTIONS[BATTLEFIELD]);
+  self:Reset();
   self:RegisterEvent('PLAYER_DEAD');
   self:RegisterEvent('UNIT_AURA');
   self:RegisterEvent('UNIT_TARGET');
   self:RegisterEvent('UNIT_HEALTH_FREQUENT');
   self:RegisterEvent('UNIT_FLAGS');
   self:RegisterEvent('UNIT_COMBAT');
+  self:RegisterEvent('COMBAT_LOG_EVENT_UNFILTERED');
   self:RegisterEvent('PARTY_LEADER_CHANGED');
   self:RegisterEvent('UPDATE_WORLD_STATES');
   self:RegisterEvent('ARENA_PREP_OPPONENT_SPECIALIZATIONS');
   self:RegisterEvent('ARENA_OPPONENT_UPDATE');
   self:RegisterEvent('UPDATE_BATTLEFIELD_SCORE');
   self:SetScript('OnUpdate', self.OnUpdate);
+  self:DisableOptions('BATTLEGROUND');
+  self:DisableOptions('ARENA');
   self:ObjectivesFrame();
   if self.instanceType == 'pvp' then
     RequestBattlefieldScoreData();
@@ -732,7 +856,7 @@ function MrTarget:Destroy()
   else
     self:RegisterEvent('PLAYER_REGEN_ENABLED');
   end
-  UNITS = {};
+  self:Reset();
   self.battlefield = nil;
   self:ObjectivesFrame();
   self:UnregisterEvent('PLAYER_DEAD');
@@ -741,17 +865,20 @@ function MrTarget:Destroy()
   self:UnregisterEvent('UNIT_HEALTH_FREQUENT');
   self:UnregisterEvent('UNIT_FLAGS');
   self:UnregisterEvent('UNIT_COMBAT');
+  self:UnregisterEvent('COMBAT_LOG_EVENT_UNFILTERED');
   self:UnregisterEvent('PARTY_LEADER_CHANGED');
   self:UnregisterEvent('UPDATE_WORLD_STATES');
   self:UnregisterEvent('ARENA_PREP_OPPONENT_SPECIALIZATIONS');
   self:UnregisterEvent('ARENA_OPPONENT_UPDATE');
   self:UnregisterEvent('UPDATE_BATTLEFIELD_SCORE');
   self:SetScript('OnUpdate', nil);
+  self:EnableOptions('BATTLEGROUND');
+  self:EnableOptions('ARENA');
 end
 
 function MrTarget:OnUpdate(time)
   LAST_REQUEST = LAST_REQUEST + time;
-  if REQUEST_FREQUENCY == 0 or LAST_REQUEST < REQUEST_FREQUENCY or (WorldStateScoreFrame and WorldStateScoreFrame:IsShown()) then
+  if REQUEST_TICK == 0 or LAST_REQUEST < REQUEST_TICK or (WorldStateScoreFrame and WorldStateScoreFrame:IsShown()) then
     return;
   end
   if self.instanceType == 'pvp' then
@@ -760,6 +887,81 @@ function MrTarget:OnUpdate(time)
     self:UpdateArenaScore();
   end
   LAST_REQUEST = 0;
+end
+
+function MrTarget:UpdateNaming()
+  self:ResetNames();
+  for i=1, OPTIONS[BATTLEFIELD].MAX_FRAMES do
+    if FRAMES[i].unit then
+      local name, server = self:SplitName(FRAMES[i].unit.name);
+      FRAMES[i].unit.display = self:SetReadableName(name)..server;
+      FRAMES[i].name:SetText(FRAMES[i].unit.display);
+    end
+  end
+end
+
+function MrTarget:UpdateUI(borderless)
+  if borderless then
+    self.Options[BATTLEFIELD].Icons:Show();
+    self:SetBorderless();
+  else
+    self.Options[BATTLEFIELD].Icons:Hide();
+    self:SetStandard();
+  end
+end
+
+function MrTarget:SetBorderless()
+  for i=1, OPTIONS[BATTLEFIELD].MAX_FRAMES do
+    FRAMES[i]:DisableDrawLayer('BORDER');
+    FRAMES[i].roleIcon.icon:SetTexture('Interface\\LFGFrame\\LFGRole');
+    FRAMES[i].roleIcon.icon:SetPoint('TOPLEFT', FRAMES[i], 'TOPLEFT', 2.5, -3);
+    if FRAMES[i].unit then
+      FRAMES[i].roleIcon.icon:SetTexCoord(GetTexCoordsForRole(FRAMES[i].unit.role, true));
+    end
+    FRAMES[i].name:SetFontObject("GameFontHighlightBorderless");
+    FRAMES[i].healthBar:ClearAllPoints();
+    FRAMES[i].healthBar:SetPoint('TOPLEFT', FRAMES[i], 'TOPLEFT', 0, 0);
+    FRAMES[i].healthBar:SetPoint('BOTTOMRIGHT', FRAMES[i], 'BOTTOMRIGHT', 0, 15);
+    FRAMES[i].powerBar:ClearAllPoints();
+    FRAMES[i].powerBar:SetPoint('TOPLEFT', FRAMES[i].healthBar, 'BOTTOMLEFT', 0, -1);
+    FRAMES[i].powerBar:SetPoint('BOTTOMRIGHT', FRAMES[i], 'BOTTOMRIGHT', 0, 1);
+    FRAMES[i].spec:Hide();
+    if OPTIONS[BATTLEFIELD].ICONS then
+      FRAMES[i].specIcon:Show();
+    else
+      FRAMES[i].specIcon:Hide();
+    end
+    for a=1, MAX_AURAS do
+      FRAMES[i]['auraIcon'..a].icon:SetTexCoord(0.1, 0.9, 0.1, 0.9);
+      FRAMES[i]['auraIcon'..a].icon:SetSize(35, 35);
+    end
+  end
+  self.borderFrame:Hide();
+end
+
+function MrTarget:SetStandard()
+  for i=1, OPTIONS[BATTLEFIELD].MAX_FRAMES do
+    FRAMES[i]:EnableDrawLayer('BORDER');
+    FRAMES[i].roleIcon.icon:SetTexture('Interface\\LFGFrame\\UI-LFG-ICON-PORTRAITROLES');
+    FRAMES[i].roleIcon.icon:SetPoint('TOPLEFT', FRAMES[i], 'TOPLEFT', 2.5, -2.5);
+    if FRAMES[i].unit then
+      FRAMES[i].roleIcon.icon:SetTexCoord(GetTexCoordsForRole(FRAMES[i].unit.role, false));
+    end
+    FRAMES[i].name:SetFontObject("GameFontHighlight");
+    FRAMES[i].healthBar:ClearAllPoints();
+    FRAMES[i].healthBar:SetPoint('TOPLEFT', FRAMES[i], 'TOPLEFT', 1, -1);
+    FRAMES[i].healthBar:SetPoint('BOTTOMRIGHT', FRAMES[i], 'BOTTOMRIGHT', -1, 9);
+    FRAMES[i].powerBar:ClearAllPoints();
+    FRAMES[i].powerBar:SetPoint('TOPLEFT', FRAMES[i].healthBar, 'BOTTOMLEFT', 0, -2);
+    FRAMES[i].powerBar:SetPoint('BOTTOMRIGHT', FRAMES[i], 'BOTTOMRIGHT', -1, 1);
+    FRAMES[i].spec:Show();
+    FRAMES[i].specIcon:Hide();
+    for a=1, MAX_AURAS do
+      FRAMES[i]['auraIcon'..a].icon:SetTexCoord(0, 1, 0, 1);
+      FRAMES[i]['auraIcon'..a].icon:SetSize(36, 36);
+    end
+  end
+  self.borderFrame:Show();
 end
 
 local function RandomKey(t)
@@ -771,42 +973,67 @@ local function RandomKey(t)
   return keys[math.random(1, #keys)];
 end
 
-function MrTarget:OpenDebugFrame()
-  if not self.battlefield and not InCombatLockdown() then
-    self:ResetNames();
-    local class = select(2, UnitClass('player'));
-    local specid, spec = GetSpecializationInfo(GetSpecialization());
-    local player = self:GetName(UnitName('player'), true);
-    UNITS = {{ uid=UnitGUID('player'), name=player, target='player', class=class, spec=spec, role=GetSpecializationRoleByID(specid) }};
-    for i=1,MAX_FRAMES-1 do
-      class = RandomKey(ROLES);
-      spec = RandomKey(ROLES[class]);
-      table.insert(UNITS, {
-        uid=i, name=self:GetNextName(i),
-        role=GetSpecializationRoleByID(ROLES[class][spec].id),
-        target='raid'..i, class=class, spec=spec
-      });
+local RUSSIANS = {
+  'Афила', 'Сэйбот', 'Яджун', 'Найнс', 'Айвен', 'Аллорион', 'Марги', 'Атжай',
+  'Сигр', 'Вайлен', 'Меру', 'Игми', 'Вандерер', 'Биотикус', 'Эксдаркикс'
+};
+
+function MrTarget:OpenOptions(key)
+  if not self.battlefield then
+    self:LoadOptions(key, OPTIONS[key]);
+    self:Reset();
+    if not InCombatLockdown() then
+      local class, spec = nil, nil;
+      for i=1, OPTIONS[BATTLEFIELD].MAX_FRAMES do
+        class = RandomKey(ROLES);
+        spec = RandomKey(ROLES[class]);
+        table.insert(UNITS, {
+          uid=i, name=RUSSIANS[i], display=self:SetReadableName(RUSSIANS[i]),
+          role=GetSpecializationRoleByID(ROLES[class][spec].id),
+          target='raid'..i, class=class, spec=spec, icon=ROLES[class][spec].icon
+        });
+      end
+      table.sort(UNITS, SortByRole);
+      self:UpdateFrames();
+      self:SetAura(FRAMES[1], 1, 23333, '', BG_AURAS[23333].icon, 1, 0);
+      self:SetAura(FRAMES[1], 2, 46392, '', BG_AURAS[46392].icon, 1, 0);
+      self:SetAura(FRAMES[1], 3, 46393, '', BG_AURAS[46393].icon, 1, 0);
+      self:ResetAlpha(OPTIONS[BATTLEFIELD].RANGE);
+      self:Show();
     end
-    table.sort(UNITS, SortByRole);
-    self:UpdateFrames();
-    self:PlayerTargetUnit('player', true);
-    self:LeaderTargetUnit('player', true);
-    local frame = self:UnitFrame('player');
-    local faction = UnitFactionGroup('player');
-    self:SetAura(frame, 1, 23333, '', BG_AURAS[23333].icon, 1, 0);
-    self:SetAura(frame, 2, 46392, '', BG_AURAS[46392].icon, 1, 0);
-    self:SetAura(frame, 3, 46393, '', BG_AURAS[46393].icon, 1, 0);
-    self:Show();
   end
 end
 
-function MrTarget:CloseDebugFrame()
+function MrTarget:CloseOptions()
   if not self.battlefield then
-    if not InCombatLockdown() then
-      self:Destroy();
-    else
-      self:RegisterEvent('PLAYER_REGEN_ENABLED');
+    if self:IsVisible() then
+      if not InCombatLockdown() then
+        self:Hide();
+      else
+        self:RegisterEvent('PLAYER_REGEN_ENABLED');
+      end
     end
+  end
+end
+
+function MrTarget:GetPosition()
+  for i=1, self:GetNumPoints() do
+    local point, relativeTo, relativePoint, x, y = self:GetPoint(i);
+    return { point, relativeTo, relativePoint, x, y };
+  end
+end
+
+function MrTarget:SavePosition()
+  if InterfaceOptionsFrame:IsShown() then
+    OPTIONS[BATTLEFIELD].POSITION = self:GetPosition();
+    self:StopMovingOrSizing();
+  end
+end
+
+function MrTarget:ChangePosition()
+  if InterfaceOptionsFrame:IsShown() then
+    self:ClearAllPoints();
+    self:StartMoving();
   end
 end
 
@@ -814,80 +1041,100 @@ function MrTarget:Resize(size)
   self:SetScale(size/100);
 end
 
-function MrTarget:OptionsFrame()
-  self.Options = CreateFrame('Frame', 'MrTargetOptions', UIParent, 'MrTargetOptionsTemplate');
+function MrTarget:InitOptions()
+  self.Options = CreateFrame('Frame', 'MrTargetOptions', UIParent);
   self.Options.name = GetAddOnMetadata('MrTarget', 'Title');
-  self.Options.title:SetText('MrTarget '..VERSION);
-  _G[self.Options.Size:GetName()..'Low']:SetText('50%');
-  _G[self.Options.Size:GetName()..'High']:SetText('150%');
-  self.Options.okay = function() MrTarget:SaveOptions(); MrTarget:CloseDebugFrame(); end;
-  self.Options.default = function() MrTarget:DefaultOptions(); end;
-  self.Options.cancel = function() MrTarget:LoadOptions(OPTIONS); MrTarget:CloseDebugFrame(); end;
-  self.Options:SetScript('OnShow', function() if InterfaceOptionsFrame:IsShown() then MrTarget:OpenDebugFrame(); end end);
-  self.Options:SetScript('OnHide', function() MrTarget:CloseDebugFrame(); end);
   InterfaceOptions_AddCategory(self.Options);
-  self:InitSetOptions();
-  self:LoadOptions(OPTIONS);
+  self:AddOptionsFrame('BATTLEGROUND', 'Battlegrounds');
+  self:AddOptionsFrame('ARENA', 'Arena and Skirmish');
+  self:LoadOptions('BATTLEGROUND', OPTIONS.BATTLEGROUND);
+  self:LoadOptions('ARENA', OPTIONS.ARENA);
 end
 
-function MrTarget:InitSetOptions()
-  UIDropDownMenu_Initialize(self.Options.Set, function()
-    for set in pairs(NAME_SETS) do
-      UIDropDownMenu_AddButton({ owner=self.Options.Set, text=set, value=set, checked=nil, arg1=set, func=(function(_, value)
-        UIDropDownMenu_ClearAll(self.Options.Set);
-        UIDropDownMenu_SetSelectedValue(self.Options.Set, value);
-        NAME_OPTIONS = NAME_SETS[value];
-        self:OpenDebugFrame();
+function MrTarget:AddOptionsFrame(key, title)
+  self.Options[key] = CreateFrame('Frame', 'MrTargetOptions'..key, self.Options, 'MrTargetOptionsTemplate');
+  self.Options[key].name = title;
+  self.Options[key].parent = self.Options.name;
+  self.Options[key].Title:SetText(string.upper(title));
+  self.Options[key].Subtitle:SetText('MrTarget '..VERSION);
+  self.Options[key].Enabled.text:SetText('Enable in '..title);
+  self.Options[key].okay = function() MrTarget:SaveAllOptions(); end;
+  self.Options[key].default = function() MrTarget:DefaultOptions(key); end;
+  self.Options[key].cancel = function() MrTarget:CancelOptions(key); end;
+  self.Options[key]:SetScript('OnHide', function(self) MrTarget:CloseOptions(); end);
+  self.Options[key]:SetScript('OnShow', function(self) MrTarget:OpenOptions(key); end);
+  self.Options[key]:Hide();
+  InterfaceOptions_AddCategory(self.Options[key]);
+end
+
+function MrTarget:InitNamingOptions(key, default)
+  UIDropDownMenu_Initialize(self.Options[key].Naming, function()
+    for i, option in pairs({ 'Transmute', 'Transliterate', 'Ignore' }) do
+      UIDropDownMenu_AddButton({ owner=self.Options[key].Naming, text=option, value=option, checked=nil, arg1=option, func=(function(_, value)
+        UIDropDownMenu_ClearAll(self.Options[key].Naming);
+        UIDropDownMenu_SetSelectedValue(self.Options[key].Naming, value);
+        OPTIONS[BATTLEFIELD].NAMING = value;
+        self:UpdateNaming();
       end)});
     end
   end);
-  UIDropDownMenu_SetAnchor(self.Options.Set, 16, 22, 'TOPLEFT', self.Options.Set:GetName()..'Left', 'BOTTOMLEFT');
-  UIDropDownMenu_JustifyText(self.Options.Set, 'LEFT');
+  UIDropDownMenu_SetAnchor(self.Options[key].Naming, 16, 22, 'TOPLEFT', self.Options[key].Naming:GetName()..'Left', 'BOTTOMLEFT');
+  UIDropDownMenu_JustifyText(self.Options[key].Naming, 'LEFT');
+  UIDropDownMenu_SetSelectedValue(self.Options[key].Naming, default);
 end
 
-function MrTarget:LoadOptions(options)
-  self.Options.Arena:SetChecked(options.ARENA);
-  self.Options.Battlegrounds:SetChecked(options.BATTLEGROUNDS);
-  self.Options.Rename:SetChecked(options.RENAME);
-  UIDropDownMenu_SetSelectedValue(self.Options.Set, options.SET);
-  if not self.Options.Rename:GetChecked() then
-    UIDropDownMenu_DisableDropDown(self:GetParent().Set);
+function MrTarget:LoadOptions(key, options)
+  BATTLEFIELD=key;
+  self.Options[key].Enabled:SetChecked(options.ENABLED);
+  self.Options[key].Range:SetChecked(options.RANGE);
+  self.Options[key].Borderless:SetChecked(options.BORDERLESS);
+  self.Options[key].Icons:SetChecked(options.ICONS);
+  self.Options[key].Size:SetValue(options.SIZE);
+  self:InitNamingOptions(key, options.NAMING);
+  if not InCombatLockdown() then
+    self:UpdateUI(options.BORDERLESS);
+    self:Resize(options.SIZE);
+    self:ClearAllPoints();
+    local ok, point, relativeTo, relativePoint, x, y = pcall(unpack, options.POSITION);
+    if not ok then
+      point, relativeTo, relativePoint, x, y = unpack(DEFAULT_OPTIONS.BATTLEGROUND.POSITION);
+    end
+    self:SetPoint(point, relativeTo, relativePoint, x, y);
   end
-  NAME_OPTIONS = NAME_SETS[options.SET];
-  self:Resize(options.SIZE);
-  self.Options.Size:SetValue(options.SIZE);
-  MAX_FRAMES = options.MAX_FRAMES or DEFAULT_OPTIONS.MAX_FRAMES;
-  MAX_AURAS = options.MAX_AURAS or DEFAULT_OPTIONS.MAX_AURAS;
 end
 
-function MrTarget:SaveOptions()
-  OPTIONS.ARENA = self.Options.Arena:GetChecked();
-  OPTIONS.BATTLEGROUNDS = self.Options.Battlegrounds:GetChecked();
-  OPTIONS.RENAME = self.Options.Rename:GetChecked();
-  OPTIONS.SET = UIDropDownMenu_GetSelectedValue(self.Options.Set);
-  OPTIONS.SIZE = self.Options.Size:GetValue();
+function MrTarget:SaveOptions(key)
+  OPTIONS[key].ENABLED = self.Options[key].Enabled:GetChecked();
+  OPTIONS[key].RANGE = self.Options[key].Range:GetChecked();
+  OPTIONS[key].BORDERLESS = self.Options[key].Borderless:GetChecked();
+  OPTIONS[key].ICONS = self.Options[key].Icons:GetChecked();
+  OPTIONS[key].SIZE = self.Options[key].Size:GetValue();
 end
 
-function MrTarget:DefaultOptions()
-  self:LoadOptions(DEFAULT_OPTIONS);
+function MrTarget:SaveAllOptions()
+  self:SaveOptions('BATTLEGROUND');
+  self:SaveOptions('ARENA');
+end
+
+function MrTarget:CancelOptions(key) MrTarget:LoadOptions(key, OPTIONS[key]); end
+function MrTarget:DefaultOptions(key) self:LoadOptions(key, DEFAULT_OPTIONS[key]); end
+function MrTarget:QuickSave() self:SaveOptions(BATTLEFIELD); end
+
+function MrTarget:DisableOptions(key)
+  UIDropDownMenu_DisableDropDown(self.Options[key].Naming);
+  self.Options[key].Borderless:Disable();
+  self.Options[key].Icons:Disable();
+end
+
+function MrTarget:EnableOptions(key)
+  UIDropDownMenu_EnableDropDown(self.Options[key].Naming);
+  self.Options[key].Borderless:Enable();
+  self.Options[key].Icons:Enable();
 end
 
 function MrTarget:ProcessMessage(prefix, message, type, sender)
   if prefix == CHAT_PREFIX then
-    if UnitIsGroupLeader(sender) then
-      if NAME_SETS[message] then
-        NAME_OPTIONS = NAME_SETS[message];
-      end
-    end
   end
-end
-
-function MrTarget:BroadcastOptions()
-  if RegisterAddonMessagePrefix then
-    RegisterAddonMessagePrefix(CHAT_PREFIX);
-  end
-  SendAddonMessage(CHAT_PREFIX, OPTIONS.SET, CHAT_CHANNEL);
-  self.assistIcon:Hide();
 end
 
 function MrTarget:PlayerLogout()
@@ -897,31 +1144,48 @@ function MrTarget:PlayerLogout()
 end
 
 function MrTarget:OnHide()
-  for i=1, MAX_FRAMES do
-    if FRAMES[i] then
-      FRAMES[i]:Hide();
-    end
-  end
-  self.targetIcon:Hide();
-  self.assistIcon:Hide();
-end
-
-function MrTarget:OnEvent(event, arg1, arg2, arg3, arg4)
-  if event == 'ADDON_LOADED' and arg1 == 'MrTarget' then
-    OPTIONS = OPTIONS or {};
-    for i,v in pairs(DEFAULT_OPTIONS) do
-      if not OPTIONS[i] then
-        OPTIONS[i] = v;
+  if not InCombatLockdown() then
+    for i=1, OPTIONS[BATTLEFIELD].MAX_FRAMES do
+      if FRAMES[i] then
+        FRAMES[i]:Hide();
       end
     end
+    self.targetIcon:Hide();
+    self.assistIcon:Hide();
+  else
+    self:RegisterEvent('PLAYER_REGEN_ENABLED');
+  end
+end
+
+function MrTarget:OnOptions()
+  OPTIONS = OPTIONS or {};
+  if OPTIONS.VERSION ~= VERSION then
+    OPTIONS = DEFAULT_OPTIONS;
+  else
+    for i,v in pairs(DEFAULT_OPTIONS.BATTLEGROUND) do
+      if OPTIONS.BATTLEGROUND[i] == nil then
+        OPTIONS.BATTLEGROUND[i] = v;
+      end
+    end
+    for i,v in pairs(DEFAULT_OPTIONS.ARENA) do
+      if OPTIONS.ARENA[i] == nil then
+        OPTIONS.ARENA[i] = v;
+      end
+    end
+  end
+end
+
+function MrTarget:OnEvent(event, ...)
+  if event == 'ADDON_LOADED' and select(1, ...) == 'MrTarget' then
+    self:OnOptions();
     self:OnLoad();
+  elseif event == 'PLAYER_LOGIN' then
+    self:UpdatePlayer();
   elseif event == 'CHAT_MSG_ADDON' then
-    self:ProcessMessage(arg1, arg2, arg3, arg4);
+    self:ProcessMessage(...);
   elseif event == 'ZONE_CHANGED_NEW_AREA' then
     self:UpdateZone();
   elseif event == 'ARENA_PREP_OPPONENT_SPECIALIZATIONS' then
-    self:UpdateArenaScore();
-  elseif event == 'ARENA_OPPONENT_UPDATE' then
     self:UpdateArenaScore();
   elseif event == 'UPDATE_BATTLEFIELD_SCORE' then
     if not InCombatLockdown() then
@@ -932,63 +1196,40 @@ function MrTarget:OnEvent(event, arg1, arg2, arg3, arg4)
   elseif event == 'PLAYER_REGEN_ENABLED' then
     self:UnregisterEvent('PLAYER_REGEN_ENABLED');
     if self.instanceType == 'none' then
-      self:Destroy();
+      self:Hide();
     end
   elseif event == 'PLAYER_LOGOUT' then
     self:PlayerLogout();
   elseif self.battlefield then
-    if event == 'UNIT_COMBAT' then
-      self:UpdateUnit(arg1);
-    elseif event == 'UNIT_HEALTH_FREQUENT' then
-      self:UpdateUnit(arg1);
-    elseif event == 'UNIT_FLAGS' then
-      self:UpdateUnit(arg1);
-    elseif event == 'UPDATE_WORLD_STAfES' then
+    if event == 'UPDATE_WORLD_STATES' then
       self:UpdateState();
     elseif event == 'PARTY_LEADER_CHANGED' then
-      self:BroadcastOptions();
+      self:UpdateState();
     elseif event == 'GROUP_ROSTER_UPDATE' then
-      self:BroadcastOptions();
+      self:UpdateState();
     elseif event == 'PARTY_MEMBERS_CHANGED' then
-      self:BroadcastOptions();
+      self:UpdateState();
+    elseif event == 'ARENA_OPPONENT_UPDATE' then
+      self:UpdateState();
+    elseif event == 'UNIT_HEALTH_FREQUENT' then
+      self:UpdateUnit(...);
+    elseif event == 'UNIT_COMBAT' then
+      self:UpdateUnit(...);
     elseif event == 'UNIT_AURA' then
-      self:UpdateUnit(arg1);
+      self:UpdateUnit(...);
     elseif event == 'UNIT_TARGET' then
-      self:UpdateUnit(arg1);
-      self:UpdateTarget(arg1);
+      self:UpdateUnit(...);
+      self:UpdateTarget(...);
+    elseif event == 'UNIT_FLAGS' then
+      self:UpdateUnit(...);
     elseif event == 'PLAYER_DEAD' then
       self:PlayerDied();
+    elseif event == 'COMBAT_LOG_EVENT_UNFILTERED' then
+      if OPTIONS[BATTLEFIELD].RANGE then
+        self:CombatEvent(...);
+      end
     end
   end
-end
-
-local waitTable, waitFrame = {}, nil;
-function MrTarget:Wait(delay, func, ...)
-  if(type(delay)~="number" or type(func)~="function") then
-    return false;
-  end
-  if(waitFrame == nil) then
-    waitFrame = CreateFrame("Frame", "WaitFrame", UIParent);
-    waitFrame:SetScript("onUpdate",function (self,elapse)
-      local count = #waitTable;
-      local i = 1;
-      while(i<=count) do
-        local waitRecord = tremove(waitTable,i);
-        local d = tremove(waitRecord,1);
-        local f = tremove(waitRecord,1);
-        local p = tremove(waitRecord,1);
-        if(d>elapse) then
-          tinsert(waitTable,i,{d-elapse,f,p});
-          i = i + 1;
-        else
-          count = count - 1;
-          f(unpack(p));
-        end
-      end
-    end);
-  end
-  tinsert(waitTable,{delay,func,{...}});
-  return true;
 end
 
 HookSecureFunc('UnitFrame_Update', function(frame)
@@ -1004,7 +1245,7 @@ HookSecureFunc('WorldStateScoreFrame_Update', function(frame)
     if text then
       local name, server = MrTarget:SplitName(text);
       if name and server then
-        button.name.text:SetText(MrTarget:GetName(name, false)..server);
+        button.name.text:SetText(MrTarget:GetReadableName(name)..server);
       end
     end
   end
@@ -1025,7 +1266,6 @@ function SlashCmdList.MRTARGET(cmd, box)
     MrTarget:Destroy();
   else
     InterfaceOptionsFrame_OpenToCategory(MrTarget.Options);
-    InterfaceOptionsFrame_OpenToCategory(MrTarget.Options);
-    MrTarget:OpenDebugFrame();
+    InterfaceOptionsFrame_OpenToCategory(MrTarget.Options.BATTLEGROUND);
   end
 end

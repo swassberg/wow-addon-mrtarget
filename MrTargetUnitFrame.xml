@@ -53,7 +53,7 @@
         <FontString name="$parentName" inherits="GameFontHighlight" parentKey="name" justifyH="LEFT">
           <Anchors>
             <Anchor point="TOPLEFT" relativeTo="$parent" relativePoint="TOPLEFT" x="15" y="-2"/>
-            <Anchor point="TOPRIGHT" x="-3" y="-3.2"/>
+            <Anchor point="TOPRIGHT" relativeTo="$parent" relativePoint="TOPRIGHT" x="-3" y="-3.2"/>
           </Anchors>
         </FontString>
       </Layer>
@@ -64,6 +64,15 @@
             <Anchor point="TOPRIGHT" relativeTo="$parentName" relativePoint="BOTTOMRIGHT" x="0" y="0"/>
           </Anchors>
         </FontString>
+      </Layer>
+      <Layer level="ARTWORK">
+        <Texture name="$parentSpecIcon" parentKey="specIcon" forceAlpha="true" hidden="false">
+          <TexCoords left="0.1" right="0.9" top="0.1" bottom="0.9"/>
+          <Size x="35" y="35"/>
+          <Anchors>
+            <Anchor point="TOPRIGHT" relativeTo="$parent" relativePoint="TOPLEFT" x="-1" y="0"/>
+          </Anchors>
+        </Texture>
       </Layer>
       <Layer level="OVERLAY">
         <Texture name="$parentTargetHighlight" parentKey="targetHighlight" forceAlpha="true" hidden="true" file="Interface\RaidFrame\Raid-FrameHighlights">
@@ -89,7 +98,7 @@
       <Button name="$parentRoleIcon" parentKey="roleIcon">
         <Size x="12" y="12"/>
         <Anchors>
-          <Anchor point="TOPLEFT" relativeTo="$parent" relativePoint="TOPLEFT" x="2" y="-2"/>
+          <Anchor point="TOPRIGHT" relativeTo="$parentName" relativePoint="TOPLEFT" x="-1" y="0"/>
         </Anchors>
         <Layers>
           <Layer level="ARTWORK">
@@ -101,10 +110,10 @@
       </Button>
     </Frames>
     <Scripts>
-      <OnEnter> self:GetParent():OnEnter(self); </OnEnter>
-      <OnLeave> self:GetParent():OnLeave(self); </OnLeave>
-      <OnDragStart> self:GetParent():StartMoving(); </OnDragStart>
-      <OnDragStop> self:GetParent():StopMovingOrSizing(); </OnDragStop>
+      <OnEnter> MrTarget:OnEnter(self); </OnEnter>
+      <OnLeave> MrTarget:OnLeave(self); </OnLeave>
+      <OnDragStart> MrTarget:ChangePosition(); </OnDragStart>
+      <OnDragStop> MrTarget:SavePosition(); </OnDragStop>
     </Scripts>
   </Button>
   <Button name="MrTargetUnitFrameAuraIconTemplate" virtual="true" enableMouse="false" hidden="false">

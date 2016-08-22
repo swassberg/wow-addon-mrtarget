@@ -1,9 +1,28 @@
-MrTarget v2.0.4
+MrTarget v2.1.2
 =====================================================================
 Copyright (C) 2014 Lock of War, Developmental (Pty) Ltd
 
 Warlords of Draenor v6.0.3
 ---------------------------------------------------------------------
+09/02/2015
+v2.1.2
+Fixed several range issues
+Added transmute naming option (pokemon only)
+Disable naming option during battle
+Improved health tracking
+Added spec icons to Borderless UI
+
+23/01/2015
+v2.1.1
+Added Russian transliteration (Sijtsma)
+Only movable with options panel
+Split battleground and arena settings
+Borderless/minimalist/shadowed ui interface option (deathmonkey)
+Fixed options saving bug
+Added range tracking
+Fixed unit frame depth (Kaligma)
+Significantly improved performance
+
 11/12/2014
 v2.0.4
 Fixed bug causing objectives to hide in Garrisson
