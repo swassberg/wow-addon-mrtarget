@@ -68,8 +68,8 @@ local BATTLEGROUNDS = {
     [23335]={ name="Alliance Flag", texture='Interface\\Icons\\INV_BannerPVP_02' }
   }},
   ['Deepwind Gorge'] = { size=15, buffs=true, carriers={}, spells={ 
-    [140876]={ name="Alliance Mine Cart", texture='Interface\\Minimap\\Vehicle-SilvershardMines-MineCartBlue' },
-    [141210]={ name="Horde Mine Cart", texture='Interface\\Minimap\\Vehicle-SilvershardMines-MineCartRed' }
+    [140876]={ name="Alliance Mine Cart", texture='Interface\\Icons\\INV_BannerPVP_01' },
+    [141210]={ name="Horde Mine Cart", texture='Interface\\Icons\\INV_BannerPVP_02' }
   }},
   ['Temple of Kotmogu'] = { size=10, debuffs=true, carriers={}, spells={ 
     [121164] = { name="Orb of Power", texture='Interface\\MiniMap\\TempleofKotmogu_ball_cyan' }, -- Blue Orb
@@ -149,9 +149,19 @@ function MrTarget:OnLoad()
   self:SetUserPlaced(true);     
   self:CreateFrames();
   self:RegisterEvent('ZONE_CHANGED_NEW_AREA');  
-  self:UpdateZone();   
-  -- self:SetSize(100, 15*36+14);
-  -- self:Show(); 
+  self:UpdateZone();
+end
+
+function MrTarget:CreateDebugFrame()
+  local name, _, class = UnitName('player'), UnitClass('player');
+  FRAMES[1].name:SetText(name);
+  FRAMES[1].roleIcon.icon:SetTexCoord(GetTexCoordsForRoleSmallCircle('DAMAGER'));   
+  FRAMES[1]:SetAttribute('macrotext1', '/targetexact player');
+  self:UpdateHealthColor(FRAMES[1], class);
+  self:UpdatePowerColor(FRAMES[1], name);      
+  FRAMES[1]:Show();
+  self:SetSize(100, 36+14);
+  self:Show(); 
 end
 
 function MrTarget:UpdatePowerColor(frame, unit)

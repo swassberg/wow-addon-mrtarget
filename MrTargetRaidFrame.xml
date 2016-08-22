@@ -1,12 +1,12 @@
 <Ui xmlns="http://www.blizzard.com/wow/ui/" 
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
     xsi:schemaLocation="http://www.blizzard.com/wow/ui/..\FrameXML\UI.xsd">
-    <Frame name="MrTargetRaidFrameTemplate" toplevel="true" virtual="true" hidden="true">
+    <Frame name="MrTargetRaidFrameTemplate" toplevel="true" frameStrata="MEDIUM" virtual="true" hidden="true">
         <Anchors>
             <Anchor point="TOPLEFT" relativeTo="CompactRaidFrameManager" relativePoint="TOPRIGHT" x="10" y="0"/>
         </Anchors>
         <Frames>
-            <Button name="$parentSkullIcon" frameStrata="HIGH" parentKey="skullIcon" hidden="false">
+            <Button name="$parentSkullIcon" frameStrata="MEDIUM" parentKey="skullIcon" hidden="false">
                 <Size x="18" y="16"/>
                 <Anchors>
                     <Anchor point="TOPLEFT" relativeTo="$parent" relativePoint="TOPRIGHT" x="-15" y="4"/>
@@ -18,7 +18,7 @@
                     </Layer>
                 </Layers>
             </Button>
-            <Button name="$parentTargetIcon" frameStrata="MEDIUM" parentKey="targetIcon" hidden="true">
+            <Button name="$parentTargetIcon" frameStrata="LOW" parentKey="targetIcon" hidden="true">
                 <Size x="20" y="20"/>
                 <Anchors>
                     <Anchor point="TOPLEFT" relativeTo="$parent" relativePoint="TOPRIGHT" x="0" y="-16"/>
@@ -29,7 +29,7 @@
                     </Layer>
                 </Layers>
             </Button>
-            <Button name="$parentAssistIcon" frameStrata="HIGH" parentKey="assistIcon" hidden="true">
+            <Button name="$parentAssistIcon" frameStrata="MEDIUM" parentKey="assistIcon" hidden="true">
                 <Size x="24" y="24"/>
                 <Anchors>
                     <Anchor point="TOPLEFT" relativeTo="$parentTargetIcon" relativePoint="TOPLEFT" x="-1" y="2"/>
@@ -40,7 +40,7 @@
                     </Layer>
                 </Layers>
             </Button>
-            <Frame name="$parentBorderFrame" frameStrata="MEDIUM" parentKey="borderFrame" setAllPoints="true">
+            <Frame name="$parentBorderFrame" frameStrata="LOW" parentKey="borderFrame" setAllPoints="true">
                 <Layers>
                     <Layer level="ARTWORK">
                         <Texture name="$parentTopLeft" file="Interface\RaidFrame\RaidBorder-UpperLeft">
