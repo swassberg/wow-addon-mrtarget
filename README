@@ -1,4 +1,4 @@
-MrTarget v1.0.0
+MrTarget v1.0.3
 =====================================================================
 Copyright (C) 2014 Lock of War, Developmental (Pty) Ltd
 
@@ -16,7 +16,9 @@ No disrespect is meant to those whose names are being changed, we are simply att
 playing field. This has been an issue for any serious PVP player since the European and Russian 
 servers were combined. Just watch the stats after this goes live.
 
-Please note that the Objectives Frame will be hidden while MrT is active.
+Note that the Objectives Frame will be hidden while MrT is active.
+
+Please send any feedback to mrtarget@lockofwar.com, constructive criticism is appreciated.
 
 BLIZZARD
 ---------------------------------------------------------------------
@@ -44,12 +46,16 @@ DEVELOPMENT
 Expand names replacement options by adding mutiple sets (pokemon/deities/whatever)
 Add configuration menu for switching name sets, default sizes etc
 Add flow layout for smaller resolutions and to allow for full 40 unit frames 
+Figure out what to do with target/assist icons in flow layout
+Add minimap button to show/hide quickly 
+Add column of macro buttons for healers/leaders/callers
+Prevent weird unitframe taints during combat reload
 
 BUGS & ERRORS
 ---------------------------------------------------------------------
 Every effort has been made to ensure instructional efficiency. While testing has shown virtually
 no noticable system load, we cannot guarentee we were able to produce every possible 
-combination of events. Please report any bugs to mrt@lockofwar.com.
+combination of events. We think we caught everything but please send any bugs to mrtarget@lockofwar.com.
 
 Due to the amount of data MrTarget needs to process long periods of continual use may result in 
 slight discrepancies. If you think anything looks wrong just /reload to fix.

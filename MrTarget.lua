@@ -1,18 +1,19 @@
 --
--- MrTarget v1.0.0
+-- MrTarget v1.0.3
 -- =====================================================================
 -- Copyright (C) 2014 Lock of War, Developmental (Pty) Ltd
--- 
--- In Battlegrounds, MrT provides Blizzard style ENEMY Unit Frames and replaces UNREADABLE Player Names for Target Calling purposes
--- 
+--
+-- In Battlegrounds, MrT provides Blizzard style ENEMY Unit Frames and
+-- Replaces UNREADABLE Player Names for Target Calling purposes
+--
 -- This Work is provided under the Creative Commons 
 -- Attribution-NonCommercial-NoDerivatives 4.0 International Public License
--- 
--- Every effort has been made to ensure instructional efficiency. While testing has shown virtually
--- no noticable system load, we cannot guarentee we were able to produce every possible 
--- combination of events. Please report any bugs to mrt@lockofwar.com.
 --
--- For more information see README.md and LICENSE.txt respectively
+-- Every effort has been made to ensure instructional efficiency. While testing has shown virtually
+-- no noticable system load, we cannot guarentee we were able to produce every possible combination
+-- of events. Please send any bugs or feedback to mrtarget@lockofwar.com.
+--
+-- For more information see the README and LICENSE files respectively
 --
 
 local MAX_FRAMES = 15;
