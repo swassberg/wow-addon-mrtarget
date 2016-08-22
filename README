@@ -1,0 +1,61 @@
+MrTarget v1.0.0
+=====================================================================
+Copyright (C) 2014 Lock of War, Developmental (Pty) Ltd
+
+Mist of Pandaria Version 5.4.8 (18414)
+
+MrTarget provides advanced opponent unit frames during battlegrounds. However its primary function 
+is to alter player names in Cyrillic and other multibyte character sets into names readable/callable 
+by players who would not otherwise be able to read or even pronounce anything similar to these names. 
+We believe that in any PVP encounter, and specifically in Rated Battlegrounds, the ability to target 
+call can easily be the difference between victory and defeat. 
+
+This alteration is PURELY COSMETIC and does not interfere with the experience in any way.
+
+No disrespect is meant to those whose names are being changed, we are simply attempting to level the 
+playing field. This has been an issue for any serious PVP player since the European and Russian 
+servers were combined. Just watch the stats after this goes live.
+
+Please note that the Objectives Frame will be hidden while MrT is active.
+
+BLIZZARD
+---------------------------------------------------------------------
+We would like to state that we have no desire to contravene any regulations or degrade the gaming
+experience at all. In fact, we are fans before anything else. If you guys have any issues with the 
+addon just let us know so that we can address them asap. On the other hand, if the concept or the
+code are useful to you in any way, please let us know. It would mean alot to us to know that
+we've gotten someone's attenion, especially yours. Respect. 
+
+SLASH COMMANDS
+---------------------------------------------------------------------
+/mrtarget, /mrt hide - Hide MrTarget Raid Frame 
+/mrtarget, /mrt show - Show MrTarget Raid Frame 
+
+LIMITATIONS
+---------------------------------------------------------------------
+WILL OBSCURE/BE OBSCURED BY OTHER FRAMES ON RESOLUTION HEIGHT LESS THAN 996PX.
+Units are sorted by role: TANK, HEALER, DAMAGER.
+Only Pokemon names are available.
+Display all enemy unit frames up to a maximum of 15.
+In 40 man battlegrounds only the first 15 after sort will display.
+
+DEVELOPMENT
+---------------------------------------------------------------------
+Expand names replacement options by adding mutiple sets (pokemon/deities/whatever)
+Add configuration menu for switching name sets, default sizes etc
+Add flow layout for smaller resolutions and to allow for full 40 unit frames 
+
+BUGS & ERRORS
+---------------------------------------------------------------------
+Every effort has been made to ensure instructional efficiency. While testing has shown virtually
+no noticable system load, we cannot guarentee we were able to produce every possible 
+combination of events. Please report any bugs to mrt@lockofwar.com.
+
+Due to the amount of data MrTarget needs to process long periods of continual use may result in 
+slight discrepancies. If you think anything looks wrong just /reload to fix.
+
+LICENSE
+---------------------------------------------------------------------
+This Work is provided under the Creative Commons Attribution-NonCommercial-NoDerivatives 4.0
+International Public License. For more information see LICENSE.txt included with this distribution 
+or visit https://creativecommons.org/licenses/by-nc-nd/4.0/ for the full text.
