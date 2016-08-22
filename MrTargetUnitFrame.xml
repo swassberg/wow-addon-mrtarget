@@ -1,5 +1,5 @@
-<Ui xmlns="http://www.blizzard.com/wow/ui/" 
-    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+<Ui xmlns="http://www.blizzard.com/wow/ui/"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     xsi:schemaLocation="http://www.blizzard.com/wow/ui/..\FrameXML\UI.xsd">
     <Button name="MrTargetUnitFrameTemplate" inherits="SecureUnitButtonTemplate" frameStrata="MEDIUM" virtual="true" hidden="true">
         <Size x="90" y="36"/>
@@ -49,18 +49,18 @@
                     </Anchors>
                 </Texture>
             </Layer>
-            <Layer level="ARTWORK">                                                                         
+            <Layer level="ARTWORK">
                 <FontString name="$parentName" inherits="GameFontHighlight" parentKey="name" justifyH="LEFT">
                     <Anchors>
                         <Anchor point="TOPLEFT" relativeTo="$parent" relativePoint="TOPLEFT" x="16" y="-3.2"/>
                         <Anchor point="TOPRIGHT" x="-3" y="-3.2"/>
                     </Anchors>
-                </FontString>  
+                </FontString>
             </Layer>
             <Layer level="OVERLAY">
                 <Texture name="$parentTargetHighlight" parentKey="targetHighlight" forceAlpha="true" hidden="true" file="Interface\RaidFrame\Raid-FrameHighlights">
                     <TexCoords left="0.00781250" right="0.55468750" top="0.28906250" bottom="0.55468750"/>
-                </Texture>  
+                </Texture>
             </Layer>
         </Layers>
         <Frames>
@@ -68,7 +68,7 @@
                 <Anchors>
                     <Anchor point="TOPLEFT" relativeTo="$parent" relativePoint="TOPLEFT" x="1" y="-1"/>
                     <Anchor point="BOTTOMRIGHT" relativeTo="$parent" relativePoint="BOTTOMRIGHT" x="-1" y="9"/>
-                </Anchors>               
+                </Anchors>
                 <BarTexture file="Interface\RaidFrame\Raid-Bar-Hp-Fill" layer="BORDER" forceAlpha="true"/>
             </StatusBar>
             <StatusBar name="$parentPowerBar" parentKey="powerBar" useParentLevel="true">
@@ -86,15 +86,15 @@
                 <Layers>
                     <Layer level="ARTWORK">
                         <Texture name="$parentIcon" parentKey="icon" setAllPoints="true" file="Interface\LFGFrame\UI-LFG-ICON-PORTRAITROLES">
-                            <TexCoords left="0" right="0.296875" top="0.015625" bottom="0.3125"/>                            
+                            <TexCoords left="0" right="0.296875" top="0.015625" bottom="0.3125"/>
                         </Texture>
                     </Layer>
                 </Layers>
             </Button>
             <Button name="$parentAuraIcon" parentKey="auraIcon" hidden="true">
-                <Size x="12" y="12"/>
+                <Size x="36" y="36"/>
                 <Anchors>
-                    <Anchor point="BOTTOMRIGHT" relativeTo="$parent" relativePoint="BOTTOMRIGHT" x="-4" y="10"/>
+                    <Anchor point="TOPLEFT" relativeTo="$parent" relativePoint="TOPRIGHT" x="4" y="0"/>
                 </Anchors>
                 <Layers>
                     <Layer level="ARTWORK">

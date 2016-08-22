@@ -1,28 +1,35 @@
-MrTarget v1.0.4
+MrTarget v1.1.0
 =====================================================================
 Copyright (C) 2014 Lock of War, Developmental (Pty) Ltd
 
-Mist of Pandaria Version 5.4.8 (18414) 
+Mist of Pandaria Version 5.4.8 (18414)
+
+08/10/2014
+v1.1.0
+Fixed incorrect ordering
+Moved target/assist icons to the left
+Enlarged and moved aura icons to the right
+First Arena build [disabled]
 
 09/09/2014
 v1.0.4
 Fixed Auctionator error (thanks LP)
 
-30/08/2014 
+30/08/2014
 v1.0.3
 Corrected feedback email
 Updated README
 
-29/08/2014 
-v1.0.2 
+29/08/2014
+v1.0.2
 Improved font visibility
 Corrected frame strata
 Fixed icons [Deepwind Gorge]
 
-28/08/2014 
-v1.0.1 
+28/08/2014
+v1.0.1
 Repackaged for Curse
 
-28/08/2014 
-v1.0.0 
-First Release 
+28/08/2014
+v1.0.0
+First Release
