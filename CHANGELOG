@@ -1,9 +1,17 @@
-MrTarget v3.1.5
+MrTarget v4.0.0
 =====================================================================
+Copyright (C) 2014 Lock of War, Developmental (Pty) Ltd
 
 Warlords of Draenor v7.0.3
 ---------------------------------------------------------------------
-16/04/2016
+02/08/2016
+v4.0.0
+Added columns option
+Added Grid layout
+Full fade when out of range
+Fixed range logic
+
+21/07/2016
 v3.1.5
 Updated to support patch 7.0.3 (70000)
 

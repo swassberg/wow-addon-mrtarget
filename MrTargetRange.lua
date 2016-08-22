@@ -8,6 +8,7 @@ MrTargetRange = {
   parent=nil,
   range=nil,
   update=0,
+  frequency=0.1,
   harmful={},
   helpful={}
 };
@@ -28,22 +29,37 @@ function MrTargetRange:New(parent)
   return this;
 end
 
+local function SortByRange(u,v)
+  if v and u then
+    if u.range > v.range then
+      return true;
+    end
+  elseif u then
+    return true;
+  end
+end
+
 function MrTargetRange:UpdateSpells()
   self.harmful = table.wipe(self.harmful);
   self.helpful = table.wipe(self.helpful);
   local numTabs = GetNumSpellTabs();
   for i=1,numTabs do
     local name,texture,offset,numSpells = GetSpellTabInfo(i);
-    for id=1,numSpells do
+    for j=1,numSpells do
+      local id = j+offset;
       local name, rank = GetSpellBookItemName(id, 'spell');
       local range = select(6, GetSpellInfo(name));
-      if IsHarmfulSpell(id, 'spell') then
-        table.insert(self.harmful, { name=name, range=range });
-      elseif IsHelpfulSpell(id, 'spell') then
-        table.insert(self.helpful, { name=name, range=range });
+      if range then
+        if IsHarmfulSpell(id, 'spell') then
+          table.insert(self.harmful, { name=name, range=range });
+        elseif IsHelpfulSpell(id, 'spell') then
+          table.insert(self.helpful, { name=name, range=range });
+        end
       end
     end
   end
+  table.sort(self.harmful, SortByRange)
+  table.sort(self.helpful, SortByRange)
 end
 
 function MrTargetRange:GetHarmfulRange()
@@ -51,6 +67,9 @@ function MrTargetRange:GetHarmfulRange()
   for i=1, #self.harmful do
     if IsSpellInRange(self.harmful[i].name, self.parent.unit) == 1 then
       range = range == nil and self.harmful[i].range or math.min(range, self.harmful[i].range);
+      if range then
+        break;
+      end
     end
   end
   return range;
@@ -61,6 +80,9 @@ function MrTargetRange:GetHelpfulRange()
   for i=1, #self.helpful do
     if IsSpellInRange(self.helpful[i].name, self.parent.unit) == 1 then
       range = range == nil and self.helpful[i].range or math.min(range, self.helpful[i].range);
+      if range then
+        break;
+      end
     end
   end
   return range;
@@ -68,9 +90,8 @@ end
 
 function MrTargetRange:OnUpdate(time)
   self.update = self.update + time;
-  if self.update > 0.5 then
+  if self.update > self.frequency then
     if self.parent:GetUnit(self.parent.unit) then
-      self.range = nil;
       if UnitIsConnected(self.parent.unit) and not UnitIsDeadOrGhost(self.parent.unit) then
         if UnitIsEnemy('player', self.parent.unit) then
           self.range = self:GetHarmfulRange();

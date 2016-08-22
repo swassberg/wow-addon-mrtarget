@@ -1,4 +1,4 @@
--- MrTarget v3.1.5
+-- MrTarget v4.0.0
 -- =====================================================================
 -- This Work is provided under the Creative Commons
 -- Attribution-NonCommercial-NoDerivatives 4.0 International Public License
@@ -7,21 +7,22 @@
 -- Debug /run print((select(4, GetBuildInfo())));
 
 local DEFAULT_OPTIONS = {
-  VERSION=3.13,
+  VERSION=4.00,
   ENABLED=true,
   FRIENDLY=false,
   POSITION={
-    HARMFUL={ 'RIGHT', nil, 'RIGHT', -200, 0 },
-    HELPFUL={ 'LEFT', nil, 'LEFT', 200, 0 }
+    HARMFUL={ 'RIGHT', nil, 'RIGHT', -100, 0 },
+    HELPFUL={ 'LEFT', nil, 'LEFT', 100, 0 }
   },
   BORDERLESS=false,
-  ICONS=true,
+  ICONS=false,
   SIZE=100,
   NAMING='Transmute',
   POWER=true,
   RANGE=true,
   TARGETED=true,
-  AURAS=true
+  AURAS=true,
+  COLUMNS=1
 };
 
 local FRIENDS = {
@@ -40,18 +41,20 @@ function MrTarget:Load()
   self.loaded=true;
   self.active=false;
   self.version=DEFAULT_OPTIONS.VERSION;
-  self.version_text='v3.1.3';
+  self.version_text='v4.0.0';
+  self.difficulty = false;
   self.frames={};
   self.player={};
   self.objectives=false;
   self:HelloWorld();
+  self:GetOptions();
   self:Initialize();
-  self:Options();
+  self:InitOptions();
 end
 
 function MrTarget:Initialize()
-  self.frames.HELPFUL = MrTargetGroup:New('HELPFUL', true, false);
-  self.frames.HARMFUL = MrTargetGroup:New('HARMFUL', false, true);
+  self.frames.HELPFUL = MrTargetGroup:New('HELPFUL', true, self.OPTIONS.COLUMNS);
+  self.frames.HARMFUL = MrTargetGroup:New('HARMFUL', false, self.OPTIONS.COLUMNS);
 end
 
 function MrTarget:Activate()
@@ -101,7 +104,7 @@ function MrTarget:HelloWorld()
   ChatFrame1:AddMessage(message, 0, 0, 0, GetChatTypeIndex('SYSTEM'));
 end
 
-function MrTarget:Options()
+function MrTarget:GetOptions()
   self.OPTIONS = MRTARGET_OPTIONS or nil;
   if not self.OPTIONS or self.OPTIONS.VERSION ~= self.version then
     self.OPTIONS = DEFAULT_OPTIONS;
@@ -112,7 +115,6 @@ function MrTarget:Options()
       end
     end
   end
-  self:InitOptions();
 end
 
 function MrTarget:InitOptions()
@@ -154,10 +156,12 @@ function MrTarget:SetOptions(options)
   self.options_frame.Borderless:SetChecked(options.BORDERLESS);
   self.options_frame.Icons:SetChecked(options.ICONS);
   self.options_frame.Size:SetValue(options.SIZE);
+  self.options_frame.Columns:SetValue(options.COLUMNS);
   self:InitNamingOptions(options.NAMING);
   if not InCombatLockdown() then
     self:SetOptionSize(options.SIZE);
     self:SetOptionPosition(options.POSITION);
+    self:SetOptionColumns(options.COLUMNS);
   end
 end
 
@@ -172,6 +176,7 @@ function MrTarget:SaveOptions()
   MRTARGET_OPTIONS.BORDERLESS = self.options_frame.Borderless:GetChecked();
   MRTARGET_OPTIONS.ICONS = self.options_frame.Icons:GetChecked();
   MRTARGET_OPTIONS.SIZE = self.options_frame.Size:GetValue();
+  MRTARGET_OPTIONS.COLUMNS = self.options_frame.Columns:GetValue();
 end
 
 function MrTarget:CancelOptions() MrTarget:SetOptions(self.OPTIONS); end
@@ -192,14 +197,30 @@ function MrTarget:EnableOptions()
   self.options_frame.Enabled:Enable();
   self.options_frame.Friendly:Enable();
   self.options_frame.Power:Enable();
-  self.options_frame.Auras:Enable();
   self.options_frame.Borderless:Enable();
   self.options_frame.Icons:Enable();
+  if self.OPTIONS.COLUMNS == 1 then
+    self.options_frame.Auras:Enable();
+  end
 end
 
 function MrTarget:SetOption(option, value)
   self.OPTIONS[string.upper(option)] = value;
   self:OpenOptions();
+end
+
+function MrTarget:SetOptionColumns(columns)
+  self.frames.HELPFUL:SetColumns(columns);
+  self.frames.HARMFUL:SetColumns(columns);
+  if self.options_frame then
+    if columns > 1 then
+      self.options_frame.Auras:SetChecked(false);
+      MrTarget:SetOption('auras', false);
+      self.options_frame.Auras:Hide();
+    else
+      self.options_frame.Auras:Show();
+    end
+  end
 end
 
 function MrTarget:SetOptionPosition(position)

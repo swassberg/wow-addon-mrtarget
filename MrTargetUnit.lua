@@ -126,16 +126,23 @@ function MrTargetUnit:Destroy()
   self.auras:Destroy();
 end
 
-function MrTargetUnit:UnitHealthColor()
+function MrTargetUnit:UnitHealthColor(alpha)
   local color = RAID_CLASS_COLORS[self.class];
-  self.frame.HEALTH_BAR:SetStatusBarColor(color.r, color.g, color.b);
-  self.frame.HEALTH_BAR.r, self.frame.HEALTH_BAR.g, self.frame.HEALTH_BAR.b = color.r, color.g, color.b;
+  self.frame.HEALTH_BAR:SetStatusBarColor(color.r, color.g, color.b, alpha);
+  self.frame.HEALTH_BAR.r, self.frame.HEALTH_BAR.g, self.frame.HEALTH_BAR.b, self.frame.HEALTH_BAR.alpha = color.r, color.g, color.b, alpha;
 end
 
-function MrTargetUnit:UnitPowerColor()
+function MrTargetUnit:UnitPowerColor(alpha)
   local powerType, powerToken = UnitPowerType(self.name);
   local color = POWER_BAR_COLORS[powerToken] or POWER_BAR_COLORS.MANA;
-  self.frame.POWER_BAR:SetStatusBarColor(color.r, color.g, color.b);
+  self.frame.POWER_BAR:SetStatusBarColor(color.r, color.g, color.b, alpha);
+end
+
+function MrTargetUnit:SetAlpha(alpha)
+  self:UnitHealthColor(alpha);
+  self:UnitPowerColor(alpha);
+  self.frame.SPEC_ICON:SetAlpha(alpha);
+  self.frame:SetAlpha(alpha);
 end
 
 function MrTargetUnit:UnitUpdate()
@@ -226,20 +233,20 @@ function MrTargetUnit:UpdateDisplay()
   self.frame.POWER_BAR:SetMinMaxValues(0, self.powerMax);
   self.frame.POWER_BAR:SetValue(self.power);
   self.frame.TARGETED:SetText(self.targeted);
-  self:UnitHealthColor();
-  self:UnitPowerColor();
+  self:UnitHealthColor(1);
+  self:UnitPowerColor(1);
   self:ResetTargetMacro();
   if GetTime() - self.last_update > 3 and not self.test then
     if GetTime() - self.last_update > 30 then
       self.health = self.healthMax;
       self.power = self.powerMax;
     end
-    self.frame:SetAlpha(0.5);
+    self:SetAlpha(0.5);
     self:UnitLost();
   elseif MrTarget.OPTIONS.RANGE and self.range == nil then
-    self.frame:SetAlpha(0.5);
+    self:SetAlpha(0.5);
   else
-    self.frame:SetAlpha(1);
+    self:SetAlpha(1);
   end
 end
 

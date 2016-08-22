@@ -42,7 +42,8 @@ MrTargetGroup = {
   frames={},
   units={},
   next_name=1,
-  update_units=false
+  update_units=false,
+  columns=1
 };
 
 MrTargetGroup.__index = MrTargetGroup;
@@ -65,12 +66,13 @@ local function SortUnits(u,v)
   end
 end
 
-function MrTargetGroup:New(group, friendly)
+function MrTargetGroup:New(group, friendly, columns)
   local this = setmetatable({}, MrTargetGroup);
   this.units = setmetatable({}, nil);
   this.frames = setmetatable({}, nil);
   this.group = group;
   this.friendly = friendly;
+  this.columns = columns;
   this.frame = CreateFrame('Frame', 'MrTargetGroup'..group, UIParent, 'MrTargetGroupTemplate');
   this.frame:SetScript('OnEvent', function(frame, ...) this:OnEvent(...); end);
   this.frame:SetScript('OnUpdate', function(frame, ...) this:OnUpdate(...); end);
@@ -91,20 +93,29 @@ end
 
 function MrTargetGroup:Show()
   if not InCombatLockdown() then
-    self:SetFrameStyle();
     self:UpdateOrientation();
     self.frame:Show();
   end
 end
 
-function MrTargetGroup:SetTarget(frame)
-  if frame then
+function MrTargetGroup:SetTarget(unit)
+  if unit and unit.frame then
     self.frame.TARGET:ClearAllPoints();
-    if self.reverse then self.frame.TARGET:SetPoint('TOPLEFT', frame, 'TOPRIGHT', 4, -2);
-    else self.frame.TARGET:SetPoint('TOPRIGHT', frame, 'TOPLEFT', -4, -2);
+    if self.columns > 1 then
+      if MrTarget.OPTIONS.ICONS then
+        self.frame.TARGET:SetPoint('TOPRIGHT', unit.frame, 'TOPLEFT', -4, -2);
+      else
+        self.frame.TARGET:SetPoint('TOPRIGHT', unit.frame, 'TOPRIGHT', -4, -2);
+      end
+    elseif self.reverse then
+      self.frame.TARGET:SetPoint('TOPLEFT', unit.frame, 'TOPRIGHT', 4, -2);
+    else
+      self.frame.TARGET:SetPoint('TOPRIGHT', unit.frame, 'TOPLEFT', -4, -2);
     end
+    self.frame.TARGET.unit = unit;
     self.frame.TARGET:Show();
   else
+    self.frame.TARGET.unit = false;
     self.frame.TARGET:Hide();
   end
 end
@@ -116,7 +127,7 @@ function MrTargetGroup:PlayerTargetChanged()
       for i=1, #self.frames do
         if self.frames[i] then
           if target == self.frames[i].name then
-            self:SetTarget(self.frames[i].frame);
+            self:SetTarget(self.frames[i]);
             return;
           end
         end
@@ -126,14 +137,24 @@ function MrTargetGroup:PlayerTargetChanged()
   self:SetTarget(nil);
 end
 
-function MrTargetGroup:SetAssist(frame)
-  if frame then
+function MrTargetGroup:SetAssist(unit)
+  if unit and unit.frame then
     self.frame.ASSIST:ClearAllPoints();
-    if self.reverse then self.frame.ASSIST:SetPoint('TOPLEFT', frame, 'TOPRIGHT', 8, -4);
-    else self.frame.ASSIST:SetPoint('TOPRIGHT', frame, 'TOPLEFT', -6, -4);
+    if self.columns > 1 then
+      if MrTarget.OPTIONS.ICONS then
+        self.frame.ASSIST:SetPoint('TOPRIGHT', unit.frame, 'TOPLEFT', -6, -4);
+      else
+        self.frame.ASSIST:SetPoint('TOPRIGHT', unit.frame, 'TOPRIGHT', -6, -4);
+      end
+    elseif self.reverse then
+      self.frame.ASSIST:SetPoint('TOPLEFT', unit.frame, 'TOPRIGHT', 8, -4);
+    else
+      self.frame.ASSIST:SetPoint('TOPRIGHT', unit.frame, 'TOPLEFT', -6, -4);
     end
+    self.frame.ASSIST.unit = unit;
     self.frame.ASSIST:Show();
   else
+    self.frame.ASSIST.unit = false;
     self.frame.ASSIST:Hide();
   end
 end
@@ -146,7 +167,7 @@ function MrTargetGroup:UnitTarget(unit)
         for i=1, #self.frames do
           if self.frames[i] then
             if target == self.frames[i].name then
-              self:SetAssist(self.frames[i].frame);
+              self:SetAssist(self.frames[i]);
               return;
             end
           end
@@ -219,11 +240,25 @@ function MrTargetGroup:InitFrame()
 end
 
 function MrTargetGroup:CreateFrames()
-  for i=1, 15 do
+  for i=1, self.max do
     if not self.frames[i] then self.frames[i] = MrTargetUnit:New(self, i, self.reverse); end
+  end
+  self:UpdateLayout();
+end
+
+function MrTargetGroup:UpdateLayout()
+  local max = math.max(10, #self.units);
+  for i=1, max do
     if i > 1 then
       self.frames[i].frame:ClearAllPoints();
-      self.frames[i].frame:SetPoint('TOP', self.frames[i-1].frame, 'BOTTOM', 0, 0);
+      local rows = math.ceil(max/self.columns);
+      if i > rows then
+        local offset = MrTarget.OPTIONS.ICONS and 36 or 0;
+        self.frames[i].frame:SetPoint('TOPLEFT', self.frames[i-rows].frame, 'TOPRIGHT', offset, 0);
+      else
+        local offset = MrTarget.OPTIONS.BORDERLESS and 0 or -1;
+        self.frames[i].frame:SetPoint('TOP', self.frames[i-1].frame, 'BOTTOM', 0, offset);
+      end
     end
   end
 end
@@ -282,9 +317,12 @@ function MrTargetGroup:OnUpdate(time)
         self.frames[i]:UnsetUnit();
       end
     end
-    self.frame:SetSize(101, math.min(#self.units, #self.frames)*self.frames[1].frame:GetHeight()+14);
+    self.frame:SetSize(101*self.columns, math.min(math.ceil(#self.units/self.columns), #self.frames)*self.frames[1].frame:GetHeight()+14);
+    self:UpdateLayout();
     self.update_units = false;
   end
+  -- self:SetTarget(self.frames[1]);
+  -- self:SetAssist(self.frames[1]);
   self.update = 0;
 end
 
@@ -339,10 +377,9 @@ function MrTargetGroup:IsUTF8(name)
   return (strlen(name) > n*1.5);
 end
 
-function MrTargetGroup:SetFrameStyle()
-  if MrTarget.OPTIONS.BORDERLESS then self.frame.borderFrame:Hide();
-  else self.frame.borderFrame:Show();
-  end
+function MrTargetGroup:SetColumns(columns)
+  self.columns = columns;
+  self:UpdateLayout();
 end
 
 local function RandomKey(t)

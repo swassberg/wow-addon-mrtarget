@@ -16,7 +16,7 @@
         </FontString>
         <FontString name="$parentTitleNaming" inherits="GameFontHighlight" justifyH="LEFT" text="Russians">
           <Anchors>
-            <Anchor point="TOPLEFT" relativeTo="$parentTitle" relativePoint="BOTTOMLEFT" x="0" y="-132"/>
+            <Anchor point="TOPLEFT" relativeTo="$parentTitle" relativePoint="BOTTOMLEFT" x="0" y="-120"/>
           </Anchors>
         </FontString>
         <FontString name="$parentTitleSize" inherits="GameFontHighlight" justifyH="LEFT" text="Set Scale">
@@ -24,9 +24,14 @@
             <Anchor point="TOPLEFT" relativeTo="$parentTitleNaming" relativePoint="BOTTOMLEFT" x="0" y="-55"/>
           </Anchors>
         </FontString>
-        <FontString name="$parentTitleBorderless" inherits="GameFontHighlight" justifyH="LEFT" text="Frame Style">
+        <FontString name="$parentTitleLayout" inherits="GameFontHighlight" justifyH="LEFT" text="Layout">
           <Anchors>
             <Anchor point="TOPLEFT" relativeTo="$parentTitleSize" relativePoint="BOTTOMLEFT" x="0" y="-55"/>
+          </Anchors>
+        </FontString>
+        <FontString name="$parentTitleBorderless" inherits="GameFontHighlight" justifyH="LEFT" text="Style">
+          <Anchors>
+            <Anchor point="TOPLEFT" relativeTo="$parentTitleLayout" relativePoint="BOTTOMLEFT" x="0" y="-80"/>
           </Anchors>
         </FontString>
         <FontString name="$parentErrors" inherits="GameFontHighlightSmall" justifyH="LEFT" text="Please send any bugs or feedback to mrtarget@lockofwar.com or tweet @renevatium #MrTarget">
@@ -139,25 +144,6 @@
           </OnClick>
         </Scripts>
       </CheckButton>
-      <CheckButton name="$parentAuras" inherits="OptionsBaseCheckButtonTemplate" parentKey="Auras">
-        <Anchors>
-          <Anchor point="TOPLEFT" relativeTo="$parentTargeted" relativePoint="BOTTOMLEFT" x="0" y="6"/>
-        </Anchors>
-        <Layers>
-          <Layer level="ARTWORK">
-            <FontString name="$parentText" inherits="GameFontNormalSmall" parentKey="text" text="Display combat auras">
-              <Anchors>
-                <Anchor point="LEFT" relativeTo="$parent" relativePoint="RIGHT" x="0" y="1"/>
-              </Anchors>
-            </FontString>
-          </Layer>
-        </Layers>
-        <Scripts>
-          <OnClick>
-            MrTarget:SetOption('auras', self:GetChecked());
-          </OnClick>
-        </Scripts>
-      </CheckButton>
       <Frame name="$parentNaming" inherits="UIDropDownMenuTemplate" parentKey="Naming" enableMouse="true">
         <Anchors>
           <Anchor point="TOPLEFT" relativeTo="$parentTitleNaming" relativePoint="BOTTOMLEFT" x="-18" y="-18"/>
@@ -204,6 +190,59 @@
           </OnValueChanged>
         </Scripts>
       </Slider>
+      <Slider name="$parentColumns" inherits="OptionsSliderTemplate" parentKey="Columns">
+        <Size x="200" y="20"/>
+        <Anchors>
+          <Anchor point="TOPLEFT" relativeTo="$parentTitleLayout" relativePoint="BOTTOMLEFT" x="4" y="-16"/>
+        </Anchors>
+        <Layers>
+          <Layer level="ARTWORK">
+            <FontString name="$parentLabel" inherits="GameFontNormalSmall" justifyH="LEFT" text="How many columns should there be?">
+              <Anchors>
+                <Anchor point="BOTTOMLEFT" relativePoint="TOPLEFT" x="-4" y="2"/>
+              </Anchors>
+            </FontString>
+            <FontString name="$parentValueText" inherits="GameFontHighlightSmall" parentKey="ValueText">
+              <Anchors>
+                <Anchor point="TOP" relativePoint="BOTTOM" x="0" y="3"/>
+              </Anchors>
+            </FontString>
+          </Layer>
+        </Layers>
+        <Scripts>
+          <OnLoad>
+            self:SetValueStep(1);
+            self:SetMinMaxValues(1, 5);
+            self:SetValue(100);
+            getglobal(self:GetName()..'Low'):SetText('1');
+            getglobal(self:GetName()..'High'):SetText('5');
+          </OnLoad>
+          <OnValueChanged>
+            self:SetValue(math.floor(self:GetValue()));
+            self.ValueText:SetText(self:GetValue()..' columns');
+            MrTarget:SetOptionColumns(self:GetValue());
+          </OnValueChanged>
+        </Scripts>
+      </Slider>
+      <CheckButton name="$parentAuras" inherits="OptionsBaseCheckButtonTemplate" parentKey="Auras">
+        <Anchors>
+          <Anchor point="TOPLEFT" relativeTo="$parentColumns" relativePoint="BOTTOMLEFT" x="-8" y="-10"/>
+        </Anchors>
+        <Layers>
+          <Layer level="ARTWORK">
+            <FontString name="$parentText" inherits="GameFontNormalSmall" parentKey="text" text="Display combat auras">
+              <Anchors>
+                <Anchor point="LEFT" relativeTo="$parent" relativePoint="RIGHT" x="0" y="1"/>
+              </Anchors>
+            </FontString>
+          </Layer>
+        </Layers>
+        <Scripts>
+          <OnClick>
+            MrTarget:SetOption('auras', self:GetChecked());
+          </OnClick>
+        </Scripts>
+      </CheckButton>
       <CheckButton name="$parentBorderless" inherits="OptionsBaseCheckButtonTemplate" parentKey="Borderless">
         <Anchors>
           <Anchor point="TOPLEFT" relativeTo="$parentTitleBorderless" relativePoint="BOTTOMLEFT" x="-4" y="-2"/>
@@ -220,6 +259,8 @@
         <Scripts>
           <OnClick>
             MrTarget:SetOption('borderless', self:GetChecked());
+            MrTarget:SetOption('icons', self:GetChecked());
+            MrTarget.options_frame.Icons:SetChecked(self:GetChecked());
           </OnClick>
         </Scripts>
       </CheckButton>
