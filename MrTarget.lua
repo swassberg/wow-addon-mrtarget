@@ -15,7 +15,7 @@
 
 local MAX_FRAMES = 15;
 local LAST_REQUEST = 0;
-local REQUEST_FREQUENCY = 1;
+local REQUEST_FREQUENCY = 0;
 local MAX_REQUEST_TIME = 10;
 
 local FRAMES = {};
@@ -79,8 +79,8 @@ local BATTLEFIELDS = {
     [156621]={ name="Alliance Flag", texture='Interface\\Icons\\INV_BannerPVP_02' }
   }},
   ['Deepwind Gorge'] = { size=15, buffs=true, carriers={}, spells={
-    [140876]={ name="Horde Mine Cart", texture='Interface\\Icons\\INV_BannerPVP_01' },
-    [141210]={ name="Alliance Mine Cart", texture='Interface\\Icons\\INV_BannerPVP_02' }
+    [141210]={ name="Horde Mine Cart", texture='Interface\\Icons\\INV_BannerPVP_01' },
+    [140876]={ name="Alliance Mine Cart", texture='Interface\\Icons\\INV_BannerPVP_02' }
   }},
   ['Temple of Kotmogu'] = { size=10, debuffs=true, carriers={}, spells={
     [121164] = { name="Orb of Power", texture='Interface\\MiniMap\\TempleofKotmogu_ball_cyan' }, -- Blue Orb
@@ -109,9 +109,9 @@ function MrTarget:OnLoad()
   self:UpdateZone();
 end
 
-function MrTarget:CreateDebugFrame()
+function MrTarget:DebugFrame()
   local name, _, class = UnitName('player'), UnitClass('player');
-  UNITS = {{ name=self:GetName(name, true), target='player', class=class, role='DAMAGER' }};
+  UNITS = {{ name=self:GetName(name, true), target='player', class=class, role='DAMAGER', spec='Retribution' }};
   self:UpdateFrames();
   self:PlayerTargetUnit('player', true);
   self:LeaderTargetUnit('player', true);
@@ -164,6 +164,11 @@ function MrTarget:GetName(name, insert)
     end
   end
   return name;
+end
+
+function MrTarget:SwitchRename()
+  REQUEST_FREQUENCY = 0;
+  NAME_ACTIVE = NAME_ACTIVE==false;
 end
 
 function MrTarget:ResetNames()
@@ -295,15 +300,17 @@ function MrTarget:UpdateState()
 end
 
 function MrTarget:UpdateAura(unit)
-  -- local name, rank, icon, count, _, _, _, _, _, _, aura = self.UnitAura(unit, 'Horde Flag');
-  -- if name then print(name, aura); end
+  -- for spell in pairs(self.battlefield.spells) do
+  --   local name, rank, icon, count, _, _, _, _, _, _, aura = self.UnitAura(unit, self.battlefield.spells[spell].name);
+  --   if name then print(self.battlefield.spells[spell].name, spell, name, aura); end
+  -- end
   self:UpdateUnit(unit);
   if UnitIsEnemy('player', unit) then
     local frame, key = self:UnitFrame(unit);
     if frame and self.battlefield.spells then
       for spell in pairs(self.battlefield.spells) do
         local name, rank, icon, count, _, _, _, _, _, _, aura = self.UnitAura(unit, self.battlefield.spells[spell].name);
-        if aura == spell then
+        if name and aura then
           if self.battlefield.carriers[aura] and self.battlefield.carriers[aura] ~= key then
             FRAMES[self.battlefield.carriers[aura]].auraIcon:Hide();
           end
@@ -411,13 +418,14 @@ function MrTarget:UpdateBattlegroundScore()
   if numScores > 0 then
     local units = {};
     for i=1, numScores do
-      local target, _, _, _, _, faction, race, _, class, _, _, _, _, _, _, talent = GetBattlefieldScore(i);
+      local target, _, _, _, _, faction, race, _, class, _, _, _, _, _, _, spec = GetBattlefieldScore(i);
       if faction ~= playerFaction then
-        table.insert(units, { name=target, server=server, target=target, class=class, role=ROLES[class][talent].role });
+        table.insert(units, { name=target, server=server, target=target, class=class, spec=spec, role=ROLES[class][spec].role });
         numEnemies = numEnemies+1;
       end
     end
     if numEnemies > 0 then
+      self:ResetNames();
       table.sort(units, SortAlphabetically);
       for i=1, numEnemies do
          local name, server = self:SplitName(units[i].name);
@@ -452,12 +460,12 @@ end
 
 function MrTarget:UpdateFrames()
   local visible = 0;
-  self:ResetNames();
   ENEMIES = {};
   for i=1, MAX_FRAMES do
     if UNITS[i] then
       FRAMES[i].unit = UNITS[i];
       FRAMES[i].name:SetText(UNITS[i].name);
+      FRAMES[i].spec:SetText(UNITS[i].spec);
       FRAMES[i].roleIcon.icon:SetTexCoord(GetTexCoordsForRoleSmallCircle(UNITS[i].role));
       FRAMES[i]:SetAttribute('macrotext1', '/targetexact '..UNITS[i].target);
       self:UpdateHealthColor(FRAMES[i], UNITS[i].class);
@@ -490,16 +498,28 @@ function MrTarget:CreateFrames()
   end
 end
 
+function MrTarget:OnEnter(frame)
+  frame.targetHighlight:Show();
+  -- GameTooltip_SetDefaultAnchor(GameTooltip, frame);
+  -- GameTooltip:SetUnit('target');
+  -- GameTooltip:Show();
+end
+
+function MrTarget:OnLeave(frame)
+  frame.targetHighlight:Hide();
+  -- GameTooltip:Hide();
+end
+
 function MrTarget:GetRoles()
-    for classID=1, MAX_CLASSES do
-        local _, classTag, classID = GetClassInfoByID(classID);
-        local numTabs = GetNumSpecializationsForClassID(classID);
-        ROLES[classTag] = {};
-        for i=1, numTabs do
-            local id, name, description, icon, background, role = GetSpecializationInfoForClassID(classID, i);
-            ROLES[classTag][name] = { role=role, id=id, description=description, icon=icon };
-        end
+  for classID=1, MAX_CLASSES do
+    local _, classTag, classID = GetClassInfoByID(classID);
+    local numTabs = GetNumSpecializationsForClassID(classID);
+    ROLES[classTag] = {};
+    for i=1, numTabs do
+      local id, name, description, icon, background, role = GetSpecializationInfoForClassID(classID, i);
+      ROLES[classTag][name] = { role=role, id=id, description=description, icon=icon };
     end
+  end
 end
 
 function MrTarget:Initialize()
@@ -587,19 +607,21 @@ function MrTarget:OnEvent(event, unit, desc)
   end
 end
 
-HookSecureFunc("UnitFrame_Update", function(self)
-  if UnitIsEnemy('player', self.unit) then
-    self.name:SetText(MrTarget:GetUnitNameReadable(self.unit));
+HookSecureFunc("UnitFrame_Update", function(frame)
+  if UnitIsEnemy('player', frame.unit) then
+    frame.name:SetText(MrTarget:GetUnitNameReadable(frame.unit));
   end
 end);
 
-HookSecureFunc("WorldStateScoreFrame_Update", function(self)
+HookSecureFunc("WorldStateScoreFrame_Update", function(frame)
   for i=1, MAX_WORLDSTATE_SCORE_BUTTONS do
     local button = _G["WorldStateScoreButton" .. i];
     local text = button.name.text:GetText();
     if text then
-      local name, server = MrTarget:SplitName(button.name.text:GetText());
-      button.name.text:SetText(MrTarget:GetName(name, false)..server);
+      local name, server = MrTarget:SplitName(text);
+      if name and server then
+        button.name.text:SetText(MrTarget:GetName(name, false)..server);
+      end
     end
   end
 end);
@@ -612,7 +634,11 @@ MrTarget:RegisterEvent('ADDON_LOADED');
 SLASH_MRTARGET1, SLASH_MRTARGET2 = '/mrt', '/mrtarget';
 
 function SlashCmdList.MRTARGET(cmd, box)
-  if cmd == 'show' then
+  if cmd == 'debug' then
+    MrTarget:DebugFrame();
+  elseif cmd == 'rename' then
+    MrTarget:SwitchRename();
+  elseif cmd == 'show' then
     MrTarget:UpdateZone();
   elseif cmd == 'hide' then
     MrTarget:Destroy();

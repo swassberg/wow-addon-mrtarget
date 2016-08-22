@@ -6,10 +6,9 @@ Supports Warlords of Draenor v6.0.2
 
 MrT provides Blizzard style PVP ENEMY Unit Frames and Replaces UNREADABLE Player Names for Target Calling purposes
 
-VERSION 2 on the way, including ARENA build =]
+v2 on the way, including ARENA build and SETTINGS tab!
 
-RIGHT CLICK DRAG to MOVE.
-The position of the frame is maintained internally.
+RIGHT CLICK DRAG to MOVE (The position of the frame is maintained internally).
 Note that the Objectives Frame will be hidden while MrT is active.
 
 Please send any bugs or feedback to mrtarget@lockofwar.com.
@@ -23,6 +22,7 @@ we've gotten someone's attenion, especially yours. Respect.
 
 SLASH COMMANDS
 ---------------------------------------------------------------------
+/mrtarget, /mrt rename - Enable or disable renaming (frames refresh on world score update) - is not saved between battlegrounds yet
 /mrtarget, /mrt hide - Hide MrTarget Raid Frame
 /mrtarget, /mrt show - Show MrTarget Raid Frame
 
