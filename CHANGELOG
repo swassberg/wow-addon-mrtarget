@@ -1,9 +1,14 @@
-MrTarget v2.1.4
+MrTarget v2.1.5
 =====================================================================
 Copyright (C) 2014 Lock of War, Developmental (Pty) Ltd
 
 Warlords of Draenor v6.1.0
 ---------------------------------------------------------------------
+02/03/2015
+v2.1.5
+Fixed first load bug (seatleson, evilmonkeyz)
+Improved range tracking
+
 25/02/2015
 v2.1.4
 Updated for patch 6.1.0 (60100)

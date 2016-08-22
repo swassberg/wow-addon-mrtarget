@@ -1,4 +1,4 @@
--- MrTarget v2.1.4
+-- MrTarget v2.1.5
 -- =====================================================================
 -- Copyright (C) 2014 Lock of War, Developmental (Pty) Ltd
 --
@@ -8,7 +8,7 @@
 -- Please send any bugs or feedback to mrtarget@lockofwar.com.
 -- /run print((select(4, GetBuildInfo())));
 
-local VERSION = 'v2.1.4';
+local VERSION = 'v2.1.5';
 
 local MAX_FRAMES = 15;
 local MAX_AURAS = 5;
@@ -169,7 +169,7 @@ end
 
 local NAME_COUNT = 1;
 local NAME_OPTIONS = {
-  'Pikachu', 'Bellsprout', 'Zubat', 'Bulbasaur', 'Charmander', 'Diglettasdsdasd', 'Slowpoke', 'Squirtle', 'Oddish', 'Geodude',
+  'Pikachu', 'Bellsprout', 'Zubat', 'Bulbasaur', 'Charmander', 'Diglett', 'Slowpoke', 'Squirtle', 'Oddish', 'Geodude',
   'Mew', 'Gastly', 'Onix', 'Golduck', 'Spearow', 'Butterfree', 'Charizard', 'Graveler', 'Psyduck', 'Meowth',
   'Krabby', 'Mankey', 'Rattata', 'Metapod', 'Alakazam', 'Pidgeotto', 'Poliwag', 'Kadabra',  'Primeape', 'Caterpie',
   'Gloom', 'Raichu', 'Golem', 'Sandshrew', 'Kakuna', 'Tentacool', 'Vulpix', 'Weedle', 'Jigglypuff', 'Blastoise'
@@ -652,7 +652,7 @@ function MrTarget:UpdateArenaScore()
       table.sort(units, SortAlphabetically);
       table.sort(units, SortByRole);
       UNITS = units;
-      REQUEST_TICK = math.max(REQUEST_TICK+0.1, REQUEST_DELAY);
+      REQUEST_TICK = math.min(REQUEST_TICK+1, REQUEST_DELAY);
       if self.battlefield and numEnemies < self.battlefield.size then
         REQUEST_TICK = 1;
       end
@@ -661,8 +661,6 @@ function MrTarget:UpdateArenaScore()
         self:Show();
       end
     end
-  else
-    RequestBattlefieldScoreData();
   end
 end
 
@@ -686,24 +684,24 @@ function MrTarget:UpdateBattlegroundScore()
       self:ResetNames();
       table.sort(units, SortAlphabetically);
       for i=1, numEnemies do
-        if units[i].name and UnitIsEnemy('player', units[i].target) then
+        if units[i].name then
           local name, server = self:SplitName(units[i].name);
           units[i].display = self:SetReadableName(name)..server;
         end
       end
       table.sort(units, SortByRole);
       UNITS = units;
-      REQUEST_TICK = math.max(REQUEST_TICK+0.1, REQUEST_DELAY);
+      REQUEST_TICK = math.min(REQUEST_TICK+1, REQUEST_DELAY);
       if self.battlefield and numEnemies < self.battlefield.size then
         REQUEST_TICK = 1;
+      elseif REQUEST_TICK == REQUEST_DELAY then
+        self:SetScript('OnUpdate', nil);
       end
       self:UpdateFrames();
       if not InCombatLockdown() then
         self:Show();
       end
     end
-  else
-    RequestBattlefieldScoreData();
   end
 end
 
@@ -746,6 +744,7 @@ function MrTarget:UpdateFrames()
       self:UpdateName(FRAMES[i], UNITS[i].name);
       self:UpdateHealthColor(FRAMES[i], UNITS[i].class);
       self:UpdatePowerColor(FRAMES[i], UNITS[i].name);
+      self:UpdateRange(FRAMES[i], UNITS[i].target);
       self:HideAuras(FRAMES[i]);
       if not InCombatLockdown() then
         FRAMES[i]:SetAttribute('macrotext1', '/targetexact '..UNITS[i].target);
@@ -868,18 +867,20 @@ function MrTarget:Initialize(battlefield)
   BATTLEFIELD = battlefield;
   self:LoadOptions(BATTLEFIELD, OPTIONS[BATTLEFIELD]);
   self:Reset();
-  self:RegisterEvent('PLAYER_DEAD');
-  self:RegisterEvent('UNIT_AURA');
   self:RegisterEvent('UNIT_TARGET');
   self:RegisterEvent('UNIT_HEALTH_FREQUENT');
   self:RegisterEvent('UNIT_FLAGS');
   self:RegisterEvent('UNIT_COMBAT');
+  self:RegisterEvent('PLAYER_DEAD');
   self:RegisterEvent('COMBAT_LOG_EVENT_UNFILTERED');
   self:RegisterEvent('PARTY_LEADER_CHANGED');
   self:RegisterEvent('UPDATE_WORLD_STATES');
-  self:RegisterEvent('ARENA_PREP_OPPONENT_SPECIALIZATIONS');
-  self:RegisterEvent('ARENA_OPPONENT_UPDATE');
   self:RegisterEvent('UPDATE_BATTLEFIELD_SCORE');
+  if battlefield == 'ARENA' then
+    self:RegisterEvent('ARENA_OPPONENT_UPDATE');
+    self:RegisterEvent('ARENA_PREP_OPPONENT_SPECIALIZATIONS');
+    self:RegisterEvent('UNIT_AURA');
+  end
   self:SetScript('OnUpdate', self.OnUpdate);
   self:DisableOptions('BATTLEGROUND');
   self:DisableOptions('ARENA');
@@ -896,18 +897,20 @@ function MrTarget:Destroy()
   self:Reset();
   self.battlefield = nil;
   self:ObjectivesFrame();
-  self:UnregisterEvent('PLAYER_DEAD');
-  self:UnregisterEvent('UNIT_AURA');
   self:UnregisterEvent('UNIT_TARGET');
   self:UnregisterEvent('UNIT_HEALTH_FREQUENT');
   self:UnregisterEvent('UNIT_FLAGS');
   self:UnregisterEvent('UNIT_COMBAT');
+  self:UnregisterEvent('PLAYER_DEAD');
   self:UnregisterEvent('COMBAT_LOG_EVENT_UNFILTERED');
   self:UnregisterEvent('PARTY_LEADER_CHANGED');
   self:UnregisterEvent('UPDATE_WORLD_STATES');
-  self:UnregisterEvent('ARENA_PREP_OPPONENT_SPECIALIZATIONS');
-  self:UnregisterEvent('ARENA_OPPONENT_UPDATE');
   self:UnregisterEvent('UPDATE_BATTLEFIELD_SCORE');
+  if battlefield == 'ARENA' then
+    self:UnregisterEvent('ARENA_OPPONENT_UPDATE');
+    self:UnregisterEvent('ARENA_PREP_OPPONENT_SPECIALIZATIONS');
+    self:UnregisterEvent('UNIT_AURA');
+  end
   self:SetScript('OnUpdate', nil);
   self:EnableOptions('BATTLEGROUND');
   self:EnableOptions('ARENA');
@@ -1036,8 +1039,8 @@ local RUSSIANS = {
 
 function MrTarget:OpenOptions(key)
   if not self.battlefield then
-    self:LoadOptions(key, OPTIONS[key]);
     self:Reset();
+    self:LoadOptions(key, OPTIONS[key]);
     if not InCombatLockdown() then
       local class, spec = nil, nil;
       for i=1, OPTIONS[BATTLEFIELD].MAX_FRAMES do
@@ -1066,6 +1069,7 @@ end
 function MrTarget:CloseOptions()
   if not self.battlefield then
     if self:IsVisible() then
+      self:Reset();
       if not InCombatLockdown() then
         self:Hide();
       else
@@ -1232,7 +1236,7 @@ end
 
 function MrTarget:OnOptions()
   OPTIONS = OPTIONS or {};
-  if not OPTIONS.BATTLEGROUND and OPTIONS.ARENA then
+  if not OPTIONS.BATTLEGROUND or not OPTIONS.ARENA then
     OPTIONS = DEFAULT_OPTIONS;
   else
     for i,v in pairs(DEFAULT_OPTIONS.BATTLEGROUND) do
@@ -1256,10 +1260,10 @@ function MrTarget:OnEvent(event, ...)
     self:UpdatePlayer();
   elseif event == 'CHAT_MSG_ADDON' then
     self:ProcessMessage(...);
-  elseif event == 'ZONE_CHANGED' or event == 'ZONE_CHANGED_NEW_AREA' or event == 'ZONE_CHANGED_INDOORS' then
-    self:UpdateZone();
-  elseif event == 'ARENA_PREP_OPPONENT_SPECIALIZATIONS' then
-    self:UpdateArenaScore();
+  elseif event == 'ZONE_CHANGED' then self:UpdateZone();
+  elseif event == 'ZONE_CHANGED_NEW_AREA' then self:UpdateZone();
+  elseif event == 'ZONE_CHANGED_INDOORS' then self:UpdateZone();
+  elseif event == 'ARENA_PREP_OPPONENT_SPECIALIZATIONS' then self:UpdateArenaScore();
   elseif event == 'UPDATE_BATTLEFIELD_SCORE' then
     if self.instanceType == 'pvp' then
       self:UpdateBattlegroundScore();
@@ -1276,22 +1280,19 @@ function MrTarget:OnEvent(event, ...)
   elseif event == 'PLAYER_LOGOUT' then
     self:PlayerLogout();
   elseif self.battlefield then
-    if event == 'UPDATE_WORLD_STATES'
-      or event == 'PARTY_LEADER_CHANGED'
-      or event == 'GROUP_ROSTER_UPDATE'
-      or event == 'PARTY_MEMBERS_CHANGED'
-      or event == 'ARENA_OPPONENT_UPDATE' then
-      self:UpdateState();
-    elseif event == 'UNIT_HEALTH_FREQUENT'
-      or event == 'UNIT_COMBAT'
-      or event == 'UNIT_AURA'
-      or event == 'UNIT_FLAGS' then
-      self:UpdateUnit(...);
+    if event == 'UPDATE_WORLD_STATES' then self:UpdateState();
+    elseif event == 'PARTY_LEADER_CHANGED' then self:UpdateState();
+    elseif event == 'GROUP_ROSTER_UPDATE' then self:UpdateState();
+    elseif event == 'PARTY_MEMBERS_CHANGED' then self:UpdateState();
+    elseif event == 'ARENA_OPPONENT_UPDATE' then self:UpdateState();
+    elseif event == 'UNIT_HEALTH_FREQUENT' then self:UpdateUnit(...);
+    elseif event == 'UNIT_COMBAT' then self:UpdateUnit(...);
+    elseif event == 'UNIT_AURA' then self:UpdateUnit(...);
+    elseif event == 'UNIT_FLAGS' then self:UpdateUnit(...);
+    elseif event == 'PLAYER_DEAD' then self:PlayerDied();
     elseif event == 'UNIT_TARGET' then
       self:UpdateTarget(...);
       self:UpdateUnit(...);
-    elseif event == 'PLAYER_DEAD' then
-      self:PlayerDied();
     elseif event == 'COMBAT_LOG_EVENT_UNFILTERED' then
       if OPTIONS[BATTLEFIELD].RANGE then
         self:CombatEvent(...);
