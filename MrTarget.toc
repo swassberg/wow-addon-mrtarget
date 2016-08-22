@@ -1,9 +1,9 @@
-## Interface: 50400
+## Interface: 60000
 ## Author: Renevatium
-## Version: 1.1.1
+## Version: 1.1.2
 ## Title: MrTarget
 ## DefaultState: Enabled
-## Notes: See README and LICENSE respectively
+## Notes: Even the Score
 
 MrTargetUnitFrame.xml
 MrTargetRaidFrame.xml

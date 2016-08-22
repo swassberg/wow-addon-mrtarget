@@ -1,32 +1,22 @@
-MrTarget v1
+MrTarget
 =====================================================================
 Copyright (C) 2014 Lock of War, Developmental (Pty) Ltd
 
-Mist of Pandaria Version 5.4.8 (18414)
+Supports Warlords of Draenor v6.0.2
 
-VERSION 2 on the way, including ARENA build.
+MrT provides Blizzard style PVP ENEMY Unit Frames and Replaces UNREADABLE Player Names for Target Calling purposes
 
-MrTarget provides advanced opponent unit frames during battlegrounds. However its primary function
-is to alter player names in Cyrillic and other multibyte character sets into names readable/callable
-by players who would not otherwise be able to read or even pronounce anything similar to these names.
-We believe that in any PVP encounter, and specifically in Rated Battlegrounds, the ability to target
-call can easily be the difference between victory and defeat.
+VERSION 2 on the way, including ARENA build =]
 
-This alteration is PURELY COSMETIC and does not interfere with the experience in any way.
-
-No disrespect is meant to those whose names are being changed, we are simply attempting to level the
-playing field. This has been an issue for any serious PVP player since the European and Russian
-servers were combined. Just watch the stats after this goes live.
-
+RIGHT CLICK DRAG to MOVE.
+The position of the frame is maintained internally.
 Note that the Objectives Frame will be hidden while MrT is active.
-To move MrT around the screen simply right click and drag anywhere on the frame.
 
-Please send any feedback to mrtarget@lockofwar.com, constructive criticism is appreciated.
+Please send any bugs or feedback to mrtarget@lockofwar.com.
 
 BLIZZARD
 ---------------------------------------------------------------------
-We would like to state that we have no desire to contravene any regulations or degrade the gaming
-experience at all. In fact, we are fans before anything else. If you guys have any issues with the
+We really not trying to break any rules. If you guys have any issues with the
 addon just let us know so that we can address them asap. On the other hand, if the concept or the
 code are useful to you in any way, please let us know. It would mean alot to us to know that
 we've gotten someone's attenion, especially yours. Respect.
@@ -43,21 +33,6 @@ Units are sorted ALPHABETICALLY, then by role: TANK, HEALER, DAMAGER.
 Only Pokemon names are currently available.
 Display all enemy unit frames up to a maximum of 15.
 In 40 man battlegrounds only the first 15 after sort will display.
-
-DEVELOPMENT
----------------------------------------------------------------------
-Expand names replacement options in sets
-Add configuration menu for switching name sets, default sizes etc
-Add flow layout for smaller resolutions and to allow for full 40 unit frames
-Add minimap button to show/hide quickly
-Add column of macro buttons for healers/leaders/callers
-
-ISSUES
----------------------------------------------------------------------
-Please send any bugs to mrtarget@lockofwar.com.
-
-Due to the amount of data MrTarget needs to process long periods of continual use may result in
-slight discrepancies. If you think anything looks wrong just /reload to fix.
 
 LICENSE
 ---------------------------------------------------------------------

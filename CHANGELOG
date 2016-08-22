@@ -1,8 +1,15 @@
-MrTarget v1.1.0
+MrTarget v1.1.2
 =====================================================================
 Copyright (C) 2014 Lock of War, Developmental (Pty) Ltd
 
-Mist of Pandaria Version 5.4.8 (18414)
+Warlords of Draenor v6.0.2
+
+15/10/2014
+v1.1.2
+Fix for ObjectiveTrackerFrame
+Upgrade to Interface 60000 (WoD)
+
+Mist of Pandaria v5.4.8
 
 10/10/2014
 v1.1.1

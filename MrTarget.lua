@@ -1,10 +1,9 @@
 --
--- MrTarget v1
+-- MrTarget
 -- =====================================================================
 -- Copyright (C) 2014 Lock of War, Developmental (Pty) Ltd
 --
--- In Battlegrounds, MrT provides Blizzard style ENEMY Unit Frames and
--- Replaces UNREADABLE Player Names for Target Calling purposes
+-- MrT provides Blizzard style PVP ENEMY Unit Frames and Replaces UNREADABLE Player Names for Target Calling purposes
 --
 -- This Work is provided under the Creative Commons
 -- Attribution-NonCommercial-NoDerivatives 4.0 International Public License
@@ -38,6 +37,9 @@ local RequestBattlefieldScoreData = RequestBattlefieldScoreData;
 local UnitName = UnitName;
 local GetUnitName = GetUnitName;
 local UnitIsEnemy = UnitIsEnemy;
+local UnitAura = UnitAura;
+local UnitBuff = UnitBuff;
+local UnitDebuff = UnitDebuff;
 local HookSecureFunc = hooksecurefunc;
 
 -- local SendAddonMessage = SendAddonMessage;
@@ -62,7 +64,9 @@ local BATTLEFIELDS = {
   ['Silvershard Mines'] = { size=10 },
   ['Warsong Gulch'] = { size=10, buffs=true, carriers={}, spells={
     [23333]={ name="Horde Flag", texture='Interface\\Icons\\INV_BannerPVP_01' },
-    [23335]={ name="Alliance Flag", texture='Interface\\Icons\\INV_BannerPVP_02' }
+    [23335]={ name="Alliance Flag", texture='Interface\\Icons\\INV_BannerPVP_02' },
+    [156618]={ name="Horde Flag", texture='Interface\\Icons\\INV_BannerPVP_01' },
+    [156621]={ name="Alliance Flag", texture='Interface\\Icons\\INV_BannerPVP_02' }
   }},
   ['Eye of the Storm'] = { size=15, buffs=true, carriers={}, spells={
     [34976]={ name="Netherstorm Flag", texture='Interface\\Icons\\INV_BannerPVP_03' },
@@ -70,11 +74,13 @@ local BATTLEFIELDS = {
   }},
   ['Twin Peaks'] = { size=10, buffs=true, carriers={}, spells={
     [23333]={ name="Horde Flag", texture='Interface\\Icons\\INV_BannerPVP_01' },
-    [23335]={ name="Alliance Flag", texture='Interface\\Icons\\INV_BannerPVP_02' }
+    [23335]={ name="Alliance Flag", texture='Interface\\Icons\\INV_BannerPVP_02' },
+    [156618]={ name="Horde Flag", texture='Interface\\Icons\\INV_BannerPVP_01' },
+    [156621]={ name="Alliance Flag", texture='Interface\\Icons\\INV_BannerPVP_02' }
   }},
   ['Deepwind Gorge'] = { size=15, buffs=true, carriers={}, spells={
-    [140876]={ name="Alliance Mine Cart", texture='Interface\\Icons\\INV_BannerPVP_01' },
-    [141210]={ name="Horde Mine Cart", texture='Interface\\Icons\\INV_BannerPVP_02' }
+    [140876]={ name="Horde Mine Cart", texture='Interface\\Icons\\INV_BannerPVP_01' },
+    [141210]={ name="Alliance Mine Cart", texture='Interface\\Icons\\INV_BannerPVP_02' }
   }},
   ['Temple of Kotmogu'] = { size=10, debuffs=true, carriers={}, spells={
     [121164] = { name="Orb of Power", texture='Interface\\MiniMap\\TempleofKotmogu_ball_cyan' }, -- Blue Orb
@@ -91,8 +97,8 @@ local BATTLEFIELDS = {
 local MrTarget = CreateFrame('Frame', 'MrTarget', UIParent, 'MrTargetRaidFrameTemplate');
 
 function MrTarget:OnLoad()
+  self.UnitAura = UnitAura;
   self:GetRoles();
-  self.UnitAura = UnitBuff;
   self:RegisterForDrag('RightButton');
   self:SetClampedToScreen(true);
   self:EnableMouse(true);
@@ -101,7 +107,6 @@ function MrTarget:OnLoad()
   self:CreateFrames();
   self:RegisterEvent('ZONE_CHANGED_NEW_AREA');
   self:UpdateZone();
-  -- self:CreateDebugFrame();
 end
 
 function MrTarget:CreateDebugFrame()
@@ -110,8 +115,7 @@ function MrTarget:CreateDebugFrame()
   self:UpdateFrames();
   self:PlayerTargetUnit('player', true);
   self:LeaderTargetUnit('player', true);
-  FRAMES[1].auraIcon.icon:SetTexture('Interface\\Icons\\INV_BannerPVP_01');
-  FRAMES[1].auraIcon:Show();
+  ObjectiveTrackerFrame:Hide();
   self:Show();
 end
 
@@ -151,11 +155,13 @@ function MrTarget:GetName(name, insert)
         else
           NAME_READABLE[name] = name;
         end
+        return NAME_READABLE[name];
       else
         return name;
       end
+    else
+      return NAME_READABLE[name];
     end
-    return NAME_READABLE[name];
   end
   return name;
 end
@@ -289,6 +295,8 @@ function MrTarget:UpdateState()
 end
 
 function MrTarget:UpdateAura(unit)
+  -- local name, rank, icon, count, _, _, _, _, _, _, aura = self.UnitAura(unit, 'Horde Flag');
+  -- if name then print(name, aura); end
   self:UpdateUnit(unit);
   if UnitIsEnemy('player', unit) then
     local frame, key = self:UnitFrame(unit);
@@ -326,11 +334,10 @@ function MrTarget:SetBattlefield()
     for i=1, GetMaxBattlefieldID() do
       local status, name, size = GetBattlefieldStatus(i);
       if status == 'active' then
+        self.UnitAura = UnitAura;
         if BATTLEFIELDS[name] then
           self.battlefield = BATTLEFIELDS[name];
-          if self.battlefield.buffs then
-            self.UnitAura = UnitBuff;
-          elseif self.battlefield.debuffs then
+          if self.battlefield.debuffs then
             self.UnitAura = UnitDebuff;
           end
         else
@@ -512,7 +519,7 @@ function MrTarget:Initialize()
     self:RegisterEvent('UPDATE_BATTLEFIELD_SCORE');
     RequestBattlefieldScoreData();
   end
-  WatchFrame:Hide();
+  ObjectiveTrackerFrame:Hide();
 end
 
 
@@ -534,7 +541,7 @@ function MrTarget:Destroy()
     self:UnregisterEvent('UPDATE_BATTLEFIELD_SCORE');
     RequestBattlefieldScoreData();
   end
-  WatchFrame:Show();
+  ObjectiveTrackerFrame:Show();
 end
 
 function MrTarget:OnUpdate(time)
@@ -556,7 +563,7 @@ function MrTarget:OnEvent(event, unit, desc)
   elseif event == 'ARENA_OPPONENT_UPDATE' then
     self:UpdateArenaScore(self);
   elseif event == 'UPDATE_BATTLEFIELD_SCORE' then
-    if UnitAffectingCombat('player') == nil then
+    if UnitAffectingCombat('player') == false then
       self:UpdateBattlegroundScore(self);
     end
   elseif self.battlefield then
