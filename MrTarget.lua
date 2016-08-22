@@ -1,7 +1,5 @@
--- MrTarget v3.1.1
+-- MrTarget v3.1.2
 -- =====================================================================
--- Copyright (C) 2014 Lock of War, Developmental (Pty) Ltd
---
 -- This Work is provided under the Creative Commons
 -- Attribution-NonCommercial-NoDerivatives 4.0 International Public License
 --
@@ -9,7 +7,7 @@
 -- Debug /run print((select(4, GetBuildInfo())));
 
 local DEFAULT_OPTIONS = {
-  VERSION=3.11,
+  VERSION=3.12,
   ENABLED=true,
   FRIENDLY=true,
   POSITION={
@@ -41,7 +39,7 @@ MrTarget = CreateFrame('Frame', 'MrTarget', UIParent);
 function MrTarget:Load()
   self.active=false;
   self.version=DEFAULT_OPTIONS.VERSION;
-  self.version_text='v3.1.1';
+  self.version_text='v3.1.2';
   self.frames={};
   self.player={};
   self.objectives=false;
@@ -64,7 +62,7 @@ end
 
 function MrTarget:ZoneChanged()
   local active, battlefield = IsInInstance();
-  if self.OPTIONS.ENABLED and battlefield == 'pvp' then
+  if self.OPTIONS.ENABLED and not self.active and battlefield == 'pvp' then
     self.active = active;
     self:DisableOptions();
     self:ObjectivesFrame(active);
@@ -289,6 +287,12 @@ MrTarget:RegisterEvent('ADDON_LOADED');
 SLASH_MRTARGET1 = '/mrt';
 SLASH_MRTARGET2 = '/mrtarget';
 function SlashCmdList.MRTARGET(cmd, box)
-  InterfaceOptionsFrame_OpenToCategory(MrTarget.options_frame);
-  InterfaceOptionsFrame_OpenToCategory(MrTarget.options_frame);
+  if cmd == 'show' then
+    MrTarget:Activate();
+  elseif cmd == 'hide' then
+    MrTarget:Destroy();
+  else
+    InterfaceOptionsFrame_OpenToCategory(MrTarget.options_frame);
+    InterfaceOptionsFrame_OpenToCategory(MrTarget.options_frame);
+  end
 end

@@ -1,14 +1,23 @@
-MrTarget v3.1.1
+MrTarget v3.1.2
 =====================================================================
-Copyright (C) 2014 Lock of War, Developmental (Pty) Ltd
 
-Warlords of Draenor v6.2.0
+Warlords of Draenor v6.2.2
+---------------------------------------------------------------------
+07/09/2015
+v3.1.2
+Updated to support patch 6.2.2 (60200)
+Fix hide/show slash commands
+
+Warlords of Draenor v6.2.1
 ---------------------------------------------------------------------
 21/08/2015
 v3.1.1
+Updated to support patch 6.2.1 (60200)
 Fix range tracking
 Fixed objectives frame toggle
 
+Warlords of Draenor v6.2.0
+---------------------------------------------------------------------
 10/08/2015
 v3.1.0
 Party frames
