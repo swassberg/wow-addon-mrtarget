@@ -1,11 +1,10 @@
-MrTarget v2.0.1
+MrTarget v2.0.2
 =====================================================================
 Copyright (C) 2014 Lock of War, Developmental (Pty) Ltd
 
 Supports Warlords of Draenor v6.0.3
-30/11/2014
 
-MrT provides Blizzard style PVP ENEMY Unit Frames; and
+MrT provides RAID style PvP ENEMY Unit Frames; and
 Replaces UNREADABLE Player Names for Target Calling purposes
 
 Works in BATTLEGROUNDS and ARENA
@@ -16,7 +15,7 @@ LEADERS CHOICE name replacement sets
 RIGHT CLICK DRAG to MOVE (position maintained internally).
 Units are sorted ALPHABETICALLY, then by role: TANK, HEALER, DAMAGER.
 
-Please send any bugs or feedback to mrtarget@lockofwar.com.
+PLEASE send any bugs or feedback to mrtarget@lockofwar.com.
 
 BLIZZARD
 ---------------------------------------------------------------------

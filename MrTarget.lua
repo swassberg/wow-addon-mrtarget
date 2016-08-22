@@ -1,5 +1,5 @@
 --
--- MrTarget v2.0.1
+-- MrTarget v2.0.2
 -- =====================================================================
 -- Copyright (C) 2014 Lock of War, Developmental (Pty) Ltd
 --
@@ -13,7 +13,7 @@
 -- For more information see the README and LICENSE files respectively
 --
 
-local VERSION = 'v2.0.0';
+local VERSION = 'v2.0.2';
 
 local MAX_FRAMES = 15;
 local MAX_AURAS = 5;
@@ -396,7 +396,7 @@ function MrTarget:UpdateArenaDebuffs(frame, count, unit)
     if count > MAX_AURAS then
       break;
     end
-    local name, rank, icon, stack, type, duration, expires, source, _, _, id = UnitDebuff(unit, i);
+    local name, rank, icon, stack, type, duration, expires, source, _, _, id = UnitAura(unit, i);
     if not source or not UnitIsUnit('player', source) then
       if self.battlefield.auras[id] then
         self:SetAura(frame, count, id, name, self.battlefield.auras[id].icon, stack, expires);
