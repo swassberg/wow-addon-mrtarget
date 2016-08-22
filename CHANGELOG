@@ -1,9 +1,26 @@
-MrTarget v1.1.3
+MrTarget v2.0.1
 =====================================================================
 Copyright (C) 2014 Lock of War, Developmental (Pty) Ltd
 
-Warlords of Draenor v6.0.2
+Warlords of Draenor v6.0.3
 ---------------------------------------------------------------------
+30/11/2014
+v2.0.1
+Disabled range
+Updated Arena auras
+
+28/11/2014
+v2.0.0
+Now resizable
+Added renaming sets
+Added interface options panel
+Updated aura (flag) recovery
+Added Focused/Brutal assault icons
+Arena system (beta)
+Added Arena auras
+GameTooltips for auras
+28 yard range
+
 27/10/2014
 v1.1.3
 Fixed issue with full team name replacement
@@ -12,6 +29,8 @@ Added slash command to enabled/disable renaming
 Added specialization text to unit frames
 Tooltips implemented but disabled
 
+Warlords of Draenor v6.0.2
+---------------------------------------------------------------------
 15/10/2014
 v1.1.2
 Fix for ObjectiveTrackerFrame

@@ -1,15 +1,20 @@
-MrTarget
+MrTarget v2.0.1
 =====================================================================
 Copyright (C) 2014 Lock of War, Developmental (Pty) Ltd
 
-Supports Warlords of Draenor v6.0.2
+Supports Warlords of Draenor v6.0.3
+30/11/2014
 
-MrT provides Blizzard style PVP ENEMY Unit Frames and Replaces UNREADABLE Player Names for Target Calling purposes
+MrT provides Blizzard style PVP ENEMY Unit Frames; and
+Replaces UNREADABLE Player Names for Target Calling purposes
 
-v2 on the way, including ARENA build and SETTINGS tab!
+Works in BATTLEGROUNDS and ARENA
 
-RIGHT CLICK DRAG to MOVE (The position of the frame is maintained internally).
-Note that the Objectives Frame will be hidden while MrT is active.
+RESIZABLE from interface options panel /mrt
+LEADERS CHOICE name replacement sets
+
+RIGHT CLICK DRAG to MOVE (position maintained internally).
+Units are sorted ALPHABETICALLY, then by role: TANK, HEALER, DAMAGER.
 
 Please send any bugs or feedback to mrtarget@lockofwar.com.
 
@@ -22,15 +27,10 @@ we've gotten someone's attenion, especially yours. Respect.
 
 SLASH COMMANDS
 ---------------------------------------------------------------------
-/mrtarget, /mrt rename - Enable or disable renaming (frames refresh on world score update) - is not saved between battlegrounds yet
-/mrtarget, /mrt hide - Hide MrTarget Raid Frame
-/mrtarget, /mrt show - Show MrTarget Raid Frame
+/mrtarget, /mrt - Open interface options panel
 
 LIMITATIONS
 ---------------------------------------------------------------------
-WILL OBSCURE/BE OBSCURED BY OTHER FRAMES ON RESOLUTION HEIGHT LESS THAN 996PX.
-Units are sorted ALPHABETICALLY, then by role: TANK, HEALER, DAMAGER.
-Only Pokemon names are currently available.
 Display all enemy unit frames up to a maximum of 15.
 In 40 man battlegrounds only the first 15 after sort will display.
 

@@ -1,121 +1,141 @@
 <Ui xmlns="http://www.blizzard.com/wow/ui/"
-    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-    xsi:schemaLocation="http://www.blizzard.com/wow/ui/..\FrameXML\UI.xsd">
-    <Button name="MrTargetUnitFrameTemplate" inherits="SecureUnitButtonTemplate" frameStrata="MEDIUM" virtual="true" hidden="true">
-        <Size x="90" y="36"/>
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.blizzard.com/wow/ui/..\FrameXML\UI.xsd">
+  <Button name="MrTargetUnitFrameTemplate" inherits="SecureUnitButtonTemplate" frameStrata="MEDIUM" virtual="true" hidden="true">
+    <Size x="90" y="36"/>
+    <Anchors>
+      <Anchor point="TOPLEFT" x="2.6" y="-6"/>
+    </Anchors>
+    <Layers>
+      <Layer level="BACKGROUND">
+        <Texture name="$parentBackground" parentKey="background" forceAlpha="true" setAllPoints="true" file="Interface\RaidFrame\Raid-Bar-Hp-Bg">
+          <TexCoords left="0" right="1" top="0" bottom="0.53125"/>
+        </Texture>
+      </Layer>
+      <Layer level="BORDER">
+        <Texture name="$parentHorizDivider" parentKey="horizDivider" horizTile="true" forceAlpha="true" file="Interface\RaidFrame\Raid-HSeparator">
+          <Size x="0" y="8"/>
+          <Anchors>
+            <Anchor point="TOPLEFT" relativeTo="$parent" relativePoint="BOTTOMLEFT" x="0" y="9"/>
+            <Anchor point="TOPRIGHT" relativeTo="$parent" relativePoint="BOTTOMRIGHT" x="0" y="9"/>
+          </Anchors>
+        </Texture>
+        <Texture name="$parentHorizTopBorder" parentKey="horizTopBorder" horizTile="true" forceAlpha="true" file="Interface\RaidFrame\Raid-HSeparator">
+          <Size x="0" y="8"/>
+          <Anchors>
+            <Anchor point="BOTTOMLEFT" relativeTo="$parent" relativePoint="TOPLEFT" x="0" y="-7"/>
+            <Anchor point="BOTTOMRIGHT" relativeTo="$parent" relativePoint="TOPRIGHT" x="0" y="-7"/>
+          </Anchors>
+        </Texture>
+        <Texture name="$parentHorizBottomBorder" parentKey="horizBottomBorder" horizTile="true" forceAlpha="true" file="Interface\RaidFrame\Raid-HSeparator">
+          <Size x="0" y="8"/>
+          <Anchors>
+            <Anchor point="TOPLEFT" relativeTo="$parent" relativePoint="BOTTOMLEFT" x="0" y="1"/>
+            <Anchor point="TOPRIGHT" relativeTo="$parent" relativePoint="BOTTOMRIGHT" x="0" y="1"/>
+          </Anchors>
+        </Texture>
+        <Texture name="$parentVertLeftBorder" parentKey="vertLeftBorder" vertTile="true" forceAlpha="true" file="Interface\RaidFrame\Raid-VSeparator">
+          <Size x="8" y="0"/>
+          <Anchors>
+            <Anchor point="TOPRIGHT" relativeTo="$parent" relativePoint="TOPLEFT" x="7" y="0"/>
+            <Anchor point="BOTTOMRIGHT" relativeTo="$parent" relativePoint="BOTTOMLEFT" x="7" y="0"/>
+          </Anchors>
+        </Texture>
+        <Texture name="$parentVertRightBorder" parentKey="vertRightBorder" vertTile="true" forceAlpha="true" file="Interface\RaidFrame\Raid-VSeparator">
+          <Size x="8" y="0"/>
+          <Anchors>
+            <Anchor point="TOPLEFT" relativeTo="$parent" relativePoint="TOPRIGHT" x="-1" y="0"/>
+            <Anchor point="BOTTOMLEFT" relativeTo="$parent" relativePoint="BOTTOMRIGHT" x="-1" y="0"/>
+          </Anchors>
+        </Texture>
+      </Layer>
+      <Layer level="ARTWORK">
+        <FontString name="$parentName" inherits="GameFontHighlight" parentKey="name" justifyH="LEFT">
+          <Anchors>
+            <Anchor point="TOPLEFT" relativeTo="$parent" relativePoint="TOPLEFT" x="15" y="-2"/>
+            <Anchor point="TOPRIGHT" x="-3" y="-3.2"/>
+          </Anchors>
+        </FontString>
+      </Layer>
+      <Layer level="ARTWORK">
+        <FontString name="$parentSpec" inherits="GameFontNormalSmall" parentKey="spec" justifyH="LEFT">
+          <Anchors>
+            <Anchor point="TOPLEFT" relativeTo="$parentName" relativePoint="BOTTOMLEFT" x="0" y="0"/>
+            <Anchor point="TOPRIGHT" relativeTo="$parentName" relativePoint="BOTTOMRIGHT" x="0" y="0"/>
+          </Anchors>
+        </FontString>
+      </Layer>
+      <Layer level="OVERLAY">
+        <Texture name="$parentTargetHighlight" parentKey="targetHighlight" forceAlpha="true" hidden="true" file="Interface\RaidFrame\Raid-FrameHighlights">
+          <TexCoords left="0.00781250" right="0.55468750" top="0.28906250" bottom="0.55468750"/>
+        </Texture>
+      </Layer>
+    </Layers>
+    <Frames>
+      <StatusBar name="$parentHealthBar" parentKey="healthBar" useParentLevel="true">
         <Anchors>
-            <Anchor point="TOPLEFT" x="2.6" y="-6"/>
+          <Anchor point="TOPLEFT" relativeTo="$parent" relativePoint="TOPLEFT" x="1" y="-1"/>
+          <Anchor point="BOTTOMRIGHT" relativeTo="$parent" relativePoint="BOTTOMRIGHT" x="-1" y="9"/>
+        </Anchors>
+        <BarTexture file="Interface\RaidFrame\Raid-Bar-Hp-Fill" layer="BORDER" forceAlpha="true"/>
+      </StatusBar>
+      <StatusBar name="$parentPowerBar" parentKey="powerBar" useParentLevel="true">
+        <Anchors>
+          <Anchor point="TOPLEFT" relativeTo="$parentHealthBar" relativePoint="BOTTOMLEFT" x="0" y="-2"/>
+          <Anchor point="BOTTOMRIGHT" relativeTo="$parent" relativePoint="BOTTOMRIGHT" x="-1" y="1"/>
+        </Anchors>
+        <BarTexture file="Interface\RaidFrame\Raid-Bar-Resource-Fill" layer="BORDER" forceAlpha="true"/>
+      </StatusBar>
+      <Button name="$parentRoleIcon" parentKey="roleIcon">
+        <Size x="12" y="12"/>
+        <Anchors>
+          <Anchor point="TOPLEFT" relativeTo="$parent" relativePoint="TOPLEFT" x="2" y="-2"/>
         </Anchors>
         <Layers>
-            <Layer level="BACKGROUND">
-                <Texture name="$parentBackground" parentKey="background" forceAlpha="true" setAllPoints="true" file="Interface\RaidFrame\Raid-Bar-Hp-Bg">
-                    <TexCoords left="0" right="1" top="0" bottom="0.53125"/>
-                </Texture>
-            </Layer>
-            <Layer level="BORDER">
-                <Texture name="$parentHorizDivider" parentKey="horizDivider" horizTile="true" forceAlpha="true" file="Interface\RaidFrame\Raid-HSeparator">
-                    <Size x="0" y="8"/>
-                    <Anchors>
-                        <Anchor point="TOPLEFT" relativeTo="$parent" relativePoint="BOTTOMLEFT" x="0" y="9"/>
-                        <Anchor point="TOPRIGHT" relativeTo="$parent" relativePoint="BOTTOMRIGHT" x="0" y="9"/>
-                    </Anchors>
-                </Texture>
-                <Texture name="$parentHorizTopBorder" parentKey="horizTopBorder" horizTile="true" forceAlpha="true" file="Interface\RaidFrame\Raid-HSeparator">
-                    <Size x="0" y="8"/>
-                    <Anchors>
-                        <Anchor point="BOTTOMLEFT" relativeTo="$parent" relativePoint="TOPLEFT" x="0" y="-7"/>
-                        <Anchor point="BOTTOMRIGHT" relativeTo="$parent" relativePoint="TOPRIGHT" x="0" y="-7"/>
-                    </Anchors>
-                </Texture>
-                <Texture name="$parentHorizBottomBorder" parentKey="horizBottomBorder" horizTile="true" forceAlpha="true" file="Interface\RaidFrame\Raid-HSeparator">
-                    <Size x="0" y="8"/>
-                    <Anchors>
-                        <Anchor point="TOPLEFT" relativeTo="$parent" relativePoint="BOTTOMLEFT" x="0" y="1"/>
-                        <Anchor point="TOPRIGHT" relativeTo="$parent" relativePoint="BOTTOMRIGHT" x="0" y="1"/>
-                    </Anchors>
-                </Texture>
-                <Texture name="$parentVertLeftBorder" parentKey="vertLeftBorder" vertTile="true" forceAlpha="true" file="Interface\RaidFrame\Raid-VSeparator">
-                    <Size x="8" y="0"/>
-                    <Anchors>
-                        <Anchor point="TOPRIGHT" relativeTo="$parent" relativePoint="TOPLEFT" x="7" y="0"/>
-                        <Anchor point="BOTTOMRIGHT" relativeTo="$parent" relativePoint="BOTTOMLEFT" x="7" y="0"/>
-                    </Anchors>
-                </Texture>
-                <Texture name="$parentVertRightBorder" parentKey="vertRightBorder" vertTile="true" forceAlpha="true" file="Interface\RaidFrame\Raid-VSeparator">
-                    <Size x="8" y="0"/>
-                    <Anchors>
-                        <Anchor point="TOPLEFT" relativeTo="$parent" relativePoint="TOPRIGHT" x="-1" y="0"/>
-                        <Anchor point="BOTTOMLEFT" relativeTo="$parent" relativePoint="BOTTOMRIGHT" x="-1" y="0"/>
-                    </Anchors>
-                </Texture>
-            </Layer>
-            <Layer level="ARTWORK">
-                <FontString name="$parentName" inherits="GameFontHighlight" parentKey="name" justifyH="LEFT">
-                    <Anchors>
-                        <Anchor point="TOPLEFT" relativeTo="$parent" relativePoint="TOPLEFT" x="15" y="-2"/>
-                        <Anchor point="TOPRIGHT" x="-3" y="-3.2"/>
-                    </Anchors>
-                </FontString>
-            </Layer>
-            <Layer level="ARTWORK">
-                <FontString name="$parentSpec" inherits="GameFontNormalSmall" parentKey="spec" justifyH="LEFT">
-                    <Anchors>
-                        <Anchor point="TOPLEFT" relativeTo="$parentName" relativePoint="BOTTOMLEFT" x="0" y="0"/>
-                        <Anchor point="TOPRIGHT" relativeTo="$parentName" relativePoint="BOTTOMRIGHT" x="0" y="0"/>
-                    </Anchors>
-                </FontString>
-            </Layer>
-            <Layer level="OVERLAY">
-                <Texture name="$parentTargetHighlight" parentKey="targetHighlight" forceAlpha="true" hidden="true" file="Interface\RaidFrame\Raid-FrameHighlights">
-                    <TexCoords left="0.00781250" right="0.55468750" top="0.28906250" bottom="0.55468750"/>
-                </Texture>
-            </Layer>
+          <Layer level="ARTWORK">
+            <Texture name="$parentIcon" parentKey="icon" setAllPoints="true" file="Interface\LFGFrame\UI-LFG-ICON-PORTRAITROLES">
+              <TexCoords left="0" right="0.296875" top="0.015625" bottom="0.3125"/>
+            </Texture>
+          </Layer>
         </Layers>
-        <Frames>
-            <StatusBar name="$parentHealthBar" parentKey="healthBar" useParentLevel="true">
-                <Anchors>
-                    <Anchor point="TOPLEFT" relativeTo="$parent" relativePoint="TOPLEFT" x="1" y="-1"/>
-                    <Anchor point="BOTTOMRIGHT" relativeTo="$parent" relativePoint="BOTTOMRIGHT" x="-1" y="9"/>
-                </Anchors>
-                <BarTexture file="Interface\RaidFrame\Raid-Bar-Hp-Fill" layer="BORDER" forceAlpha="true"/>
-            </StatusBar>
-            <StatusBar name="$parentPowerBar" parentKey="powerBar" useParentLevel="true">
-                <Anchors>
-                    <Anchor point="TOPLEFT" relativeTo="$parentHealthBar" relativePoint="BOTTOMLEFT" x="0" y="-2"/>
-                    <Anchor point="BOTTOMRIGHT" relativeTo="$parent" relativePoint="BOTTOMRIGHT" x="-1" y="1"/>
-                </Anchors>
-                <BarTexture file="Interface\RaidFrame\Raid-Bar-Resource-Fill" layer="BORDER" forceAlpha="true"/>
-            </StatusBar>
-            <Button name="$parentRoleIcon" parentKey="roleIcon">
-                <Size x="12" y="12"/>
-                <Anchors>
-                    <Anchor point="TOPLEFT" relativeTo="$parent" relativePoint="TOPLEFT" x="2" y="-2"/>
-                </Anchors>
-                <Layers>
-                    <Layer level="ARTWORK">
-                        <Texture name="$parentIcon" parentKey="icon" setAllPoints="true" file="Interface\LFGFrame\UI-LFG-ICON-PORTRAITROLES">
-                            <TexCoords left="0" right="0.296875" top="0.015625" bottom="0.3125"/>
-                        </Texture>
-                    </Layer>
-                </Layers>
-            </Button>
-            <Button name="$parentAuraIcon" parentKey="auraIcon" hidden="true">
-                <Size x="36" y="36"/>
-                <Anchors>
-                    <Anchor point="TOPLEFT" relativeTo="$parent" relativePoint="TOPRIGHT" x="4" y="0"/>
-                </Anchors>
-                <Layers>
-                    <Layer level="ARTWORK">
-                        <Texture name="$parentIcon" parentKey="icon" setAllPoints="true"/>
-                    </Layer>
-                </Layers>
-            </Button>
-        </Frames>
-        <Scripts>
-            <OnEnter> self:GetParent():OnEnter(self); </OnEnter>
-            <OnLeave> self:GetParent():OnLeave(self); </OnLeave>
-            <OnDragStart> self:GetParent():StartMoving(); </OnDragStart>
-            <OnDragStop> self:GetParent():StopMovingOrSizing(); </OnDragStop>
-        </Scripts>
-    </Button>
+      </Button>
+    </Frames>
+    <Scripts>
+      <OnEnter> self:GetParent():OnEnter(self); </OnEnter>
+      <OnLeave> self:GetParent():OnLeave(self); </OnLeave>
+      <OnDragStart> self:GetParent():StartMoving(); </OnDragStart>
+      <OnDragStop> self:GetParent():StopMovingOrSizing(); </OnDragStop>
+    </Scripts>
+  </Button>
+  <Button name="MrTargetUnitFrameAuraIconTemplate" virtual="true" enableMouse="false" hidden="false">
+    <Size x="36" y="36"/>
+    <Layers>
+      <Layer level="ARTWORK">
+        <Texture name="$parentIcon" parentKey="icon" setAllPoints="true"/>
+      </Layer>
+      <Layer level="ARTWORK">
+        <FontString name="$parentTime" inherits="TextStatusBarTextLarge" parentKey="time" justifyH="LEFT">
+          <Anchors>
+            <Anchor point="BOTTOMLEFT" relativeTo="$parent" relativePoint="BOTTOMLEFT" x="0" y="1"/>
+            <Anchor point="BOTTOMRIGHT" relativeTo="$parent" relativePoint="BOTTOMRIGHT" x="0" y="1"/>
+          </Anchors>
+        </FontString>
+      </Layer>
+    </Layers>
+    <Scripts>
+      <OnEnter>
+        if self.id then
+          GameTooltip_SetDefaultAnchor(GameTooltip, self);
+          GameTooltip:SetSpellByID(self.id);
+          GameTooltip:Show();
+        end
+      </OnEnter>
+      <OnLeave>
+        if GameTooltip:IsVisible() then
+          GameTooltip:Hide();
+          GameTooltip:ClearLines()
+        end
+      </OnLeave>
+    </Scripts>
+  </Button>
 </Ui>

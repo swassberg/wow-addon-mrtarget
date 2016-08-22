@@ -1,7 +1,7 @@
 <Ui xmlns="http://www.blizzard.com/wow/ui/"
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     xsi:schemaLocation="http://www.blizzard.com/wow/ui/..\FrameXML\UI.xsd">
-    <Frame name="MrTargetRaidFrameTemplate" toplevel="true" frameStrata="MEDIUM" virtual="true" hidden="true">
+    <Frame name="MrTargetRaidFrameTemplate" inherits="SecureUnitButtonTemplate" toplevel="true" frameStrata="MEDIUM" virtual="true" hidden="true">
         <Anchors>
             <Anchor point="TOPLEFT" relativeTo="CompactRaidFrameManager" relativePoint="TOPRIGHT" x="120" y="-20"/>
         </Anchors>
@@ -14,7 +14,6 @@
                 <Layers>
                     <Layer level="ARTWORK">
                         <Texture name="$parentIcon" parentKey="icon" setAllPoints="true" file="Interface\TargetingFrame\UI-TargetingFrame-Skull"/>
-                        <!-- <Texture name="$parentCross" parentKey="cross" setAllPoints="true" file="Spells\Target"/> -->
                     </Layer>
                 </Layers>
             </Button>

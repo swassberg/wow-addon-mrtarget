@@ -1,11 +1,13 @@
 ## Interface: 60000
 ## Author: Renevatium
-## Version: 1.1.2
+## Version: 2.0.1
 ## Title: MrTarget
 ## DefaultState: Enabled
-## Notes: Even the Score
+## SavedVariables: OPTIONS
+## Notes: MrT says Even the Score
 
 MrTargetUnitFrame.xml
 MrTargetRaidFrame.xml
+MrTargetOptions.xml
 MrTarget.lua
 
