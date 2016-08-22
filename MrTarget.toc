@@ -1,9 +1,9 @@
 ## Interface: 60200
 ## Author: Renevatium
-## Version: 3.0.1
+## Version: 3.1.1
 ## Title: MrTarget
 ## DefaultState: Enabled
-## SavedVariables: OPTIONS
+## SavedVariables: MRTARGET_OPTIONS
 ## Notes: MrT says Even the Score
 
 MrTargetAuras.xml

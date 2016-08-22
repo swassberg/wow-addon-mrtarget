@@ -21,7 +21,7 @@ end
 
 MrTargetUnit = {
   update=0,
-  group=0,
+  parent=0,
   dead=false,
   test=false,
   name=nil,
@@ -38,42 +38,46 @@ MrTargetUnit = {
   powerMax=1,
   targeted='',
   range=nil,
+  track=nil,
   last_update=0,
   update_targeted=true,
+  enemy=false,
   auras=nil
 };
 
 MrTargetUnit.__index = MrTargetUnit;
 
-function MrTargetUnit:New(group, count)
+function MrTargetUnit:New(parent, count)
   local this = setmetatable({}, MrTargetUnit);
-  this.group = group;
-  this.frame = CreateFrame('Button', group.frame:GetName()..'MrTargetUnit'..count, group.frame, 'MrTargetUnitTemplate');
+  this.parent = parent;
+  this.frame = CreateFrame('Button', parent.frame:GetName()..'MrTargetUnit'..count, parent.frame, 'MrTargetUnitTemplate');
   this.frame:SetScript('OnEvent', function(frame, ...) this:OnEvent(...); end);
   this.frame:SetScript('OnUpdate', function(frame, ...) this:OnUpdate(...); end);
   this.frame:SetScript('OnEnter', function(frame, ...) this:OnEnter(...); end);
-  this.frame:SetScript('OnLeave', function(frame, ...) this:OnLeave(...); end); 
-  this.frame:SetScript('OnDragStart', function(frame, ...) group:OnDragStart(...); end);
-  this.frame:SetScript('OnDragStop', function(frame, ...) group:OnDragStop(...); end);
-  this.frame.UPDATE_TARGETED:SetScript('OnUpdate', function(frame, ...) this:UpdateTargeted(...); end);  
+  this.frame:SetScript('OnLeave', function(frame, ...) this:OnLeave(...); end);
+  this.frame:SetScript('OnDragStart', function(frame, ...) parent:OnDragStart(...); end);
+  this.frame:SetScript('OnDragStop', function(frame, ...) parent:OnDragStop(...); end);
+  this.frame.UPDATE_TARGETED:SetScript('OnUpdate', function(frame, ...) this:UpdateTargeted(...); end);
   this.frame:EnableMouse(true);
   this.frame:RegisterForDrag('RightButton');
   this.frame:RegisterForClicks('LeftButtonUp', 'RightButtonUp');
   this.frame:SetAttribute('type1', 'macro');
   this.frame:SetAttribute('type2', 'macro');
   this.frame:SetAttribute('macrotext1', '');
-  this.frame:SetAttribute('macrotext2', '');  
-  this.auras = MrTargetAuras:New(this.frame);  
+  this.frame:SetAttribute('macrotext2', '');
+  this.auras = MrTargetAuras:New(this);
+  this.track = MrTargetRange:New(this);
   return this;
 end
 
-function MrTargetUnit:SetUnit(name, display, class, spec, role, icon, test)
+function MrTargetUnit:SetUnit(unit, name, display, class, spec, role, icon, test)
+  self.unit = unit;
+  self.frame.unit = unit;
   self.name = name;
   self.display = display;
   self.class = class;
   self.spec = spec;
   self.role = role;
-  self.unit = name;
   self.icon = icon;
   self.test = test;
   self:RegisterEvents();
@@ -88,6 +92,7 @@ function MrTargetUnit:UnsetUnit()
   self.spec = nil;
   self.role = nil;
   self.unit = nil;
+  self.frame.unit = nil;
   self.dead = false;
   self.test = false;
   self.frame.SPEC:SetText('');
@@ -113,7 +118,7 @@ function MrTargetUnit:Hide()
     self.frame:RegisterEvent('PLAYER_REGEN_ENABLED');
   else
     self.frame:Hide();
-  end  
+  end
 end
 
 function MrTargetUnit:Destroy()
@@ -136,20 +141,20 @@ end
 function MrTargetUnit:UnitUpdate()
   if self.unit then
     self.last_update = GetTime();
+    self.enemy = UnitIsEnemy(self.unit, 'player');
     self.health = UnitHealth(self.unit);
     self.healthMax = UnitHealthMax(self.unit);
     self.power = UnitPower(self.unit);
-    self.powerMax = UnitPowerMax(self.unit); 
+    self.powerMax = UnitPowerMax(self.unit);
     if UnitIsDeadOrGhost(self.unit) or UnitHealth(self.unit) == 0 then
-      self.auras:Destroy();
       self.health = 0;
       self.power = 0;
-      self.range = nil;    
-      self.dead = true; 
-    else         
-      self.range = MrTargetRange:GetRange(self.unit);
+      self.range = nil;
+      self.dead = true;
+      self.auras:Destroy();
+    else
       self.auras:UnitAura(self.unit);
-      self.dead = false; 
+      self.dead = false;
     end
   end
 end
@@ -161,7 +166,7 @@ function MrTargetUnit:UnitCheck(unit)
 end
 
 function MrTargetUnit:UpdateTargeted(unit)
-  if OPTIONS.TARGETED then
+  if MrTarget.OPTIONS.TARGETED then
     if self.update_targeted then
       self.targeted = 0;
       self.update_targeted = false;
@@ -176,21 +181,25 @@ function MrTargetUnit:UpdateTargeted(unit)
   end
 end
 
-function MrTargetUnit:GetUnit(unit)  
-  if GetUnitName(unit, true) == self.name then
-    self.unit = unit;
-  elseif GetUnitName(unit..'target', true) == self.name then
-    self.unit = unit..'target';
-  else
-    self.unit = false;
+function MrTargetUnit:GetUnit(unit)
+  self.unit = false;
+  if UnitExists(unit) then
+    if GetUnitName(unit, true) == self.name then
+      self.unit = unit;
+    elseif GetUnitName(unit..'target', true) == self.name then
+      self.unit = unit..'target';
+    end
   end
+  self.frame.unit = self.unit;
   return self.unit;
 end
 
 function MrTargetUnit:UnitLost()
   for i=1, GetNumGroupMembers() do
-    if GetUnitName('raid'..i..'target', true) == self.name then
-      self.unit = 'raid'..i..'target'; 
+    local unit = self.enemy and 'raid'..i..'target' or 'raid'..i;
+    if GetUnitName(unit, true) == self.name then
+      self.unit = unit;
+      self.frame.unit = unit;
       self:UnitUpdate();
       return;
     end
@@ -198,7 +207,7 @@ function MrTargetUnit:UnitLost()
   self.auras:Destroy();
 end
 
-function MrTargetUnit:OnUpdate(time)  
+function MrTargetUnit:OnUpdate(time)
   self.update = self.update + time;
   if self.update < 0.1 then
     return;
@@ -207,7 +216,7 @@ function MrTargetUnit:OnUpdate(time)
   self:UpdateDisplay();
 end
 
-function MrTargetUnit:UpdateDisplay() 
+function MrTargetUnit:UpdateDisplay()
   self.frame.NAME:SetText(self.display);
   self.frame.SPEC:SetText(self.spec);
   self.frame.SPEC_ICON:SetTexture(self.icon);
@@ -227,8 +236,8 @@ function MrTargetUnit:UpdateDisplay()
     end
     self.frame:SetAlpha(0.5);
     self:UnitLost();
-  elseif OPTIONS.RANGE and self.range == nil then 
-    self.frame:SetAlpha(0.5); 
+  elseif MrTarget.OPTIONS.RANGE and self.range == nil then
+    self.frame:SetAlpha(0.5);
   else
     self.frame:SetAlpha(1);
   end
@@ -245,11 +254,11 @@ function MrTargetUnit:OnEnter() self.frame.HOVER:Show(); end
 function MrTargetUnit:OnLeave() self.frame.HOVER:Hide(); end
 
 function MrTargetUnit:OnEvent(event, unit, x, y, z)
-  if event == 'UNIT_HEALTH_FREQUENT' then self:UnitCheck(unit);  
+  if event == 'UNIT_HEALTH_FREQUENT' then self:UnitCheck(unit);
   elseif event == 'UNIT_COMBAT' then self:UnitCheck(unit);
-  elseif event == 'UNIT_TARGET' then self:UnitCheck(unit); 
-  elseif event == 'UPDATE_MOUSEOVER_UNIT' then self:UnitCheck('mouseover');  
-  elseif event == 'PLAYER_REGEN_ENABLED' then self:PlayerRegenEnabled(); 
+  elseif event == 'UNIT_TARGET' then self:UnitCheck(unit);
+  elseif event == 'UPDATE_MOUSEOVER_UNIT' then self:UnitCheck('mouseover');
+  elseif event == 'PLAYER_REGEN_ENABLED' then self:PlayerRegenEnabled();
   end
 end
 
@@ -268,7 +277,7 @@ function MrTargetUnit:UnregisterEvents()
 end
 
 function MrTargetUnit:SetFrameStyle()
-  if OPTIONS.BORDERLESS then self:SetStyleBorderless();
+  if MrTarget.OPTIONS.BORDERLESS then self:SetStyleBorderless();
   else self:SetStyleDefault();
   end
 end
@@ -278,8 +287,8 @@ function MrTargetUnit:SetStyleDefault()
   self.frame.NAME:SetFontObject("GameFontHighlight");
   self.frame.TARGETED:SetFontObject("TextStatusBarTextRed");
   self.frame.HEALTH_BAR:ClearAllPoints();
-  self.frame.HEALTH_BAR:SetPoint('TOPLEFT', self.frame, 'TOPLEFT', 1, -1);  
-  if OPTIONS.POWER then
+  self.frame.HEALTH_BAR:SetPoint('TOPLEFT', self.frame, 'TOPLEFT', 1, -1);
+  if MrTarget.OPTIONS.POWER then
     self.frame.POWER_BAR:ClearAllPoints();
     self.frame.HEALTH_BAR:SetPoint('BOTTOMRIGHT', self.frame, 'BOTTOMRIGHT', -1, 10);
     self.frame.POWER_BAR:SetPoint('TOPLEFT', self.frame.HEALTH_BAR, 'BOTTOMLEFT', 0, -2);
@@ -289,7 +298,7 @@ function MrTargetUnit:SetStyleDefault()
   else
     self.frame.HEALTH_BAR:SetPoint('BOTTOMRIGHT', self.frame, 'BOTTOMRIGHT', -1, 2);
     self.frame.POWER_BAR:Hide();
-    self.frame.horizDivider:Hide();    
+    self.frame.horizDivider:Hide();
   end
   self.frame.ROLE_ICON:ClearAllPoints();
   self.frame.ROLE_ICON:SetTexture('Interface\\LFGFrame\\UI-LFG-ICON-PORTRAITROLES');
@@ -306,7 +315,7 @@ function MrTargetUnit:SetStyleBorderless()
   self.frame.TARGETED:SetFontObject("TextStatusBarTextRedBorderless");
   self.frame.HEALTH_BAR:ClearAllPoints();
   self.frame.HEALTH_BAR:SetPoint('TOPLEFT', self.frame, 'TOPLEFT', 0, 0);
-  if OPTIONS.POWER then
+  if MrTarget.OPTIONS.POWER then
     self.frame.POWER_BAR:ClearAllPoints();
     self.frame.HEALTH_BAR:SetPoint('BOTTOMRIGHT', self.frame, 'BOTTOMRIGHT', 0, 15);
     self.frame.POWER_BAR:SetPoint('TOPLEFT', self.frame.HEALTH_BAR, 'BOTTOMLEFT', 0, -1);
@@ -328,9 +337,18 @@ function MrTargetUnit:SetStyleBorderless()
   self.frame.ROLE_ICON:SetTexCoord(GetTexCoordsForRole(self.role, true));
   self.frame.ROLE_ICON:Show();
   self.frame.SPEC:Hide();
-  if OPTIONS.ICONS then
+  if MrTarget.OPTIONS.ICONS then
     self.frame.SPEC_ICON:Show();
   else
     self.frame.SPEC_ICON:Hide();
+  end
+end
+
+function MrTargetUnit:UpdateOrientation()
+  self.frame.SPEC_ICON:ClearAllPoints();
+  if self.parent.reverse then
+    self.frame.SPEC_ICON:SetPoint('TOPLEFT', self.frame, 'TOPRIGHT', 1, 0);
+  else
+    self.frame.SPEC_ICON:SetPoint('TOPRIGHT', self.frame, 'TOPLEFT', -1, 0);
   end
 end

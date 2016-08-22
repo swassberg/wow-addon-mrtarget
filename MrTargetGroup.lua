@@ -33,10 +33,12 @@ end
 MrTargetGroup = {
   active=false,
   faction=nil,
+  friendly=false,
   update=0,
   tick=1,
   max=15,
   frame=nil,
+  reverse=false,
   frames={},
   units={},
   next_name=1,
@@ -63,31 +65,34 @@ local function SortUnits(u,v)
   end
 end
 
-function MrTargetGroup:New(group)
+function MrTargetGroup:New(group, friendly)
   local this = setmetatable({}, MrTargetGroup);
-  this.units = setmetatable({}, nil); 
-  this.frames = setmetatable({}, nil); 
+  this.units = setmetatable({}, nil);
+  this.frames = setmetatable({}, nil);
   this.group = group;
+  this.friendly = friendly;
   this.frame = CreateFrame('Frame', 'MrTargetGroup'..group, UIParent, 'MrTargetGroupTemplate');
   this.frame:SetScript('OnEvent', function(frame, ...) this:OnEvent(...); end);
   this.frame:SetScript('OnUpdate', function(frame, ...) this:OnUpdate(...); end);
   this.frame:SetScript('OnDragStart', function(frame, ...) this:OnDragStart(...); end);
   this.frame:SetScript('OnDragStop', function(frame, ...) this:OnDragStop(...); end);
-  this:InitFrame();  
+  this:InitFrame();
   this:CreateFrames();
   return this;
 end
 
 function MrTargetGroup:Activate()
-  self.frame:RegisterEvent('UPDATE_BATTLEFIELD_SCORE'); 
-  self.frame:RegisterEvent('PLAYER_TARGET_CHANGED'); 
-  self.frame:RegisterEvent('UNIT_TARGET'); 
-  self:Show();  
+  self.frame:RegisterEvent('UPDATE_BATTLEFIELD_SCORE');
+  self.frame:RegisterEvent('PLAYER_TARGET_CHANGED');
+  self.frame:RegisterEvent('UNIT_TARGET');
+  self.frame:RegisterEvent('PLAYER_DEAD');
+  self:Show();
 end
 
 function MrTargetGroup:Show()
   if not InCombatLockdown() then
     self:SetFrameStyle();
+    self:UpdateOrientation();
     self.frame:Show();
   end
 end
@@ -95,21 +100,25 @@ end
 function MrTargetGroup:SetTarget(frame)
   if frame then
     self.frame.TARGET:ClearAllPoints();
-    self.frame.TARGET:SetPoint('TOPRIGHT', frame, 'TOPLEFT', -4, -2);
-    self.frame.TARGET:Show(); 
+    if self.reverse then self.frame.TARGET:SetPoint('TOPLEFT', frame, 'TOPRIGHT', 4, -2);
+    else self.frame.TARGET:SetPoint('TOPRIGHT', frame, 'TOPLEFT', -4, -2);
+    end
+    self.frame.TARGET:Show();
   else
     self.frame.TARGET:Hide();
   end
 end
 
 function MrTargetGroup:PlayerTargetChanged()
-  if UnitIsEnemy('player', 'playertarget') then
+  if not UnitIsDeadOrGhost('player') then
     local target = GetUnitName('playertarget', true);
-    for i=1, #self.frames do
-      if self.frames[i] then 
-        if target == self.frames[i].name then
-          self:SetTarget(self.frames[i].frame);
-          return;
+    if target then
+      for i=1, #self.frames do
+        if self.frames[i] then
+          if target == self.frames[i].name then
+            self:SetTarget(self.frames[i].frame);
+            return;
+          end
         end
       end
     end
@@ -120,22 +129,26 @@ end
 function MrTargetGroup:SetAssist(frame)
   if frame then
     self.frame.ASSIST:ClearAllPoints();
-    self.frame.ASSIST:SetPoint('TOPRIGHT', frame, 'TOPLEFT', -6, -4);
-    self.frame.ASSIST:Show();    
+    if self.reverse then self.frame.ASSIST:SetPoint('TOPLEFT', frame, 'TOPRIGHT', 8, -4);
+    else self.frame.ASSIST:SetPoint('TOPRIGHT', frame, 'TOPLEFT', -6, -4);
+    end
+    self.frame.ASSIST:Show();
   else
-    self.frame.ASSIST:Hide(); 
+    self.frame.ASSIST:Hide();
   end
 end
 
-function MrTargetGroup:UnitTarget(unit) 
-  if UnitIsGroupLeader(unit) then     
-    if UnitIsEnemy('player', unit..'target') then
-      local target = GetUnitName(unit..'target', true); 
-      for i=1, #self.frames do
-        if self.frames[i] then 
-          if target == self.frames[i].name then
-            self:SetAssist(self.frames[i].frame);
-            return;
+function MrTargetGroup:UnitTarget(unit)
+  if UnitIsGroupLeader(unit) then
+    if not UnitIsDeadOrGhost(unit) then
+      local target = GetUnitName(unit..'target', true);
+      if target then
+        for i=1, #self.frames do
+          if self.frames[i] then
+            if target == self.frames[i].name then
+              self:SetAssist(self.frames[i].frame);
+              return;
+            end
           end
         end
       end
@@ -144,12 +157,21 @@ function MrTargetGroup:UnitTarget(unit)
   end
 end
 
+function MrTargetGroup:HasRaidIndex(name)
+  for i=1, GetNumGroupMembers() do
+    if GetUnitName('raid'..i, true) == name then
+      return 'raid'..i;
+    end
+  end
+  return name;
+end
+
 function MrTargetGroup:IsOnBattlefield()
   if not self.active then
     for i=1, GetMaxBattlefieldID() do
       local status, name, size = GetBattlefieldStatus(i);
-      if status == 'active' then         
-        self.active = true;        
+      if status == 'active' then
+        self.active = true;
       end
     end
   end
@@ -157,39 +179,51 @@ function MrTargetGroup:IsOnBattlefield()
 end
 
 function MrTargetGroup:UpdateBattlefieldScore()
-  if self:IsOnBattlefield() then    
+  if self:IsOnBattlefield() then
     self.faction = GetBattlefieldArenaFaction();
     local numScores = GetNumBattlefieldScores();
     if numScores > 0 then
+      self.next_name = 1;
       self.units = table.wipe(self.units);
       for i=1, numScores do
         local name, _, _, _, _, faction, race, _, class, _, _, _, _, _, _, spec = GetBattlefieldScore(i);
-        if faction ~= self.faction then
-          table.insert(self.units, { name=name, display=self:GetDisplayName(name), class=class, spec=spec, role=ROLES[class][spec].role, unit=name });
+        if (faction == self.faction) == self.friendly then
+          class = class or select(2, UnitClass(name));
+          table.insert(self.units, {
+            name=name,
+            display=name,
+            class=class,
+            spec=spec,
+            role=ROLES[class][spec].role,
+            unit=self:HasRaidIndex(name)
+          });
         end
       end
       table.sort(self.units, SortUnits);
+      for i=1,#self.units do
+        self.units[i].display = self:GetDisplayName(self.units[i].name);
+      end
       self.update_units = true;
     end
   end
 end
 
-function MrTargetGroup:InitFrame()  
+function MrTargetGroup:InitFrame()
   self.frame:RegisterForDrag('RightButton');
   self.frame:SetClampedToScreen(true);
   self.frame:EnableMouse(true);
   self.frame:SetMovable(true);
-  self.frame:SetUserPlaced(true);  
+  self.frame:SetUserPlaced(true);
 end
 
 function MrTargetGroup:CreateFrames()
   for i=1, 15 do
-    if not self.frames[i] then self.frames[i] = MrTargetUnit:New(self, i); end
+    if not self.frames[i] then self.frames[i] = MrTargetUnit:New(self, i, self.reverse); end
     if i > 1 then
       self.frames[i].frame:ClearAllPoints();
       self.frames[i].frame:SetPoint('TOP', self.frames[i-1].frame, 'BOTTOM', 0, 0);
     end
-  end    
+  end
 end
 
 function MrTargetGroup:Hide()
@@ -197,7 +231,12 @@ function MrTargetGroup:Hide()
     self.frame:RegisterEvent('PLAYER_REGEN_ENABLED');
   else
     self.frame:Hide();
-  end  
+  end
+end
+
+function MrTargetGroup:PlayerDead()
+  self:SetTarget(nil);
+  self:SetAssist(nil);
 end
 
 function MrTargetGroup:PlayerRegenEnabled()
@@ -207,15 +246,15 @@ end
 
 function MrTargetGroup:Destroy()
   for i=1, #self.frames do
-    if self.frames[i] then 
-      self.frames[i]:Destroy(); 
+    if self.frames[i] then
+      self.frames[i]:Destroy();
     end
   end
   self.frame:UnregisterEvent('UPDATE_BATTLEFIELD_SCORE');
-  self.frame:UnregisterEvent('PLAYER_TARGET_CHANGED'); 
-  self.frame:UnregisterEvent('UNIT_TARGET');  
+  self.frame:UnregisterEvent('PLAYER_TARGET_CHANGED');
+  self.frame:UnregisterEvent('UNIT_TARGET');
   self.units = table.wipe(self.units);
-  self:Hide();   
+  self:Hide();
 end
 
 function MrTargetGroup:OnUpdate(time)
@@ -225,15 +264,15 @@ function MrTargetGroup:OnUpdate(time)
   end
   RequestBattlefieldScoreData();
   if self.update_units and not InCombatLockdown() and #self.units > 0 then
-    self.next_name = 1;
     for i=1, #self.frames do
       if self.units[i] then
         self.frames[i]:SetUnit(
+          self.units[i].unit,
           self.units[i].name,
-          self.units[i].display, 
-          self.units[i].class, 
-          self.units[i].spec, 
-          self.units[i].role, 
+          self.units[i].display,
+          self.units[i].class,
+          self.units[i].spec,
+          self.units[i].role,
           ROLES[self.units[i].class][self.units[i].spec].icon,
           self.units[i].test
         );
@@ -244,7 +283,6 @@ function MrTargetGroup:OnUpdate(time)
     self.frame:SetSize(101, math.min(#self.units, #self.frames)*self.frames[1].frame:GetHeight()+14);
     self.update_units = false;
   end
-  self:PlayerTargetChanged();
   self.update = 0;
 end
 
@@ -253,13 +291,14 @@ function MrTargetGroup:OnEvent(event, ...)
   elseif event == 'PLAYER_TARGET_CHANGED' then self:PlayerTargetChanged(...);
   elseif event == 'UNIT_TARGET' then self:UnitTarget(...);
   elseif event == 'PLAYER_REGEN_ENABLED' then self:PlayerRegenEnabled();
+  elseif event == 'PLAYER_DEAD' then self:PlayerDead();
   end
 end
 
 function MrTargetGroup:GetDisplayName(name)
-  if OPTIONS.NAMING == 'Transmute' then
+  if MrTarget.OPTIONS.NAMING == 'Transmute' then
     name = self:Transmute(name);
-  elseif OPTIONS.NAMING == 'Transliterate' then
+  elseif MrTarget.OPTIONS.NAMING == 'Transliterate' then
     name = self:Transliterate(name);
   end
   return name;
@@ -299,7 +338,7 @@ function MrTargetGroup:IsUTF8(name)
 end
 
 function MrTargetGroup:SetFrameStyle()
-  if OPTIONS.BORDERLESS then self.frame.borderFrame:Hide();
+  if MrTarget.OPTIONS.BORDERLESS then self.frame.borderFrame:Hide();
   else self.frame.borderFrame:Show();
   end
 end
@@ -313,30 +352,39 @@ local function RandomKey(t)
   return keys[math.random(1, #keys)];
 end
 
-function MrTargetGroup:CreateStub(names)  
+function MrTargetGroup:CreateStub(names)
+  self.next_name = 1;
   if #self.units == 0 then
     local class, spec = nil, nil;
     for i=1, self.max do
       class = RandomKey(ROLES);
       spec = RandomKey(ROLES[class]);
-      table.insert(self.units, { 
+      table.insert(self.units, {
         test=true,
-        name=names[i], 
+        name=names[i],
         display=self:GetDisplayName(names[i]),
-        class=class, 
-        spec=spec, 
-        role=ROLES[class][spec].role, 
+        class=class,
+        spec=spec,
+        role=ROLES[class][spec].role,
         unit=names[i]
       });
     end
     table.sort(self.units, SortUnits);
   else
-    self.next_name = 1;
     for i=1, self.max do
       self.units[i].display = self:GetDisplayName(names[i]);
     end
   end
   self.update_units = true;
+  self:Show();
+end
+
+function MrTargetGroup:UpdateOrientation()
+  local point, relativeTo, relativePoint, x, y = unpack(self:GetPosition());
+  self.reverse = x < 0 or x > GetScreenWidth()/2;
+  for i=1, #self.frames do
+    self.frames[i]:UpdateOrientation();
+  end
 end
 
 function MrTargetGroup:GetPosition()
@@ -355,7 +403,8 @@ end
 
 function MrTargetGroup:OnDragStop()
   if InterfaceOptionsFrame:IsShown() then
-    OPTIONS.POSITION[self.group] = self:GetPosition();
+    MrTarget.OPTIONS.POSITION[self.group] = self:GetPosition();
     self.frame:StopMovingOrSizing();
+    self:UpdateOrientation();
   end
 end

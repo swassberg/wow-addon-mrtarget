@@ -1,4 +1,4 @@
--- MrTarget v3.0.1
+-- MrTarget v3.1.1
 -- =====================================================================
 -- Copyright (C) 2014 Lock of War, Developmental (Pty) Ltd
 --
@@ -9,9 +9,13 @@
 -- Debug /run print((select(4, GetBuildInfo())));
 
 local DEFAULT_OPTIONS = {
-  VERSION=3.01,
-  ENABLED=true, 
-  POSITION={ HARMFUL={ 'LEFT', nil, 'LEFT', 200, 0 }},
+  VERSION=3.11,
+  ENABLED=true,
+  FRIENDLY=true,
+  POSITION={
+    HARMFUL={ 'RIGHT', nil, 'RIGHT', -200, 0 },
+    HELPFUL={ 'LEFT', nil, 'LEFT', 200, 0 }
+  },
   BORDERLESS=false,
   ICONS=true,
   SIZE=100,
@@ -22,7 +26,12 @@ local DEFAULT_OPTIONS = {
   AURAS=true
 };
 
-local RUSSIANS = {
+local FRIENDS = {
+  'Malfurian', 'Jaina', 'Uther', 'Anduin', 'Valeera', 'Thrall', 'Guldan', 'Garrosh',
+  'Rexxar', 'Magni', 'Alleria', 'Medivh', 'Arthas', 'Chen', 'Maleki'
+};
+
+local ENEMIES = {
   'Афила', 'Сэйбот', 'Яджун', 'Найнс', 'Айвен', 'Аллорион', 'Марги', 'Атжай',
   'Сигр', 'Вайлен', 'Меру', 'Игми', 'Вандерер', 'Биотикус', 'Эксдаркикс'
 };
@@ -32,43 +41,51 @@ MrTarget = CreateFrame('Frame', 'MrTarget', UIParent);
 function MrTarget:Load()
   self.active=false;
   self.version=DEFAULT_OPTIONS.VERSION;
-  self.version_text='v3.0.1';
+  self.version_text='v3.1.1';
   self.frames={};
   self.player={};
+  self.objectives=false;
   self:HelloWorld();
-  self:Initialize(); 
+  self:Initialize();
   self:Options();
 end
 
 function MrTarget:Initialize()
-  self.frames.HARMFUL = MrTargetGroup:New('HARMFUL');
+  self.frames.HELPFUL = MrTargetGroup:New('HELPFUL', true, false);
+  self.frames.HARMFUL = MrTargetGroup:New('HARMFUL', false, true);
 end
 
-function MrTarget:Activate()  
+function MrTarget:Activate()
+  if self.OPTIONS.FRIENDLY then
+    self.frames.HELPFUL:Activate();
+  end
   self.frames.HARMFUL:Activate();
 end
 
 function MrTarget:ZoneChanged()
-  local battlefield = select(2, GetInstanceInfo());  
-  if OPTIONS.ENABLED and battlefield == 'pvp' then
-    self.active = true;
-    self:DisableOptions();  
-    self:ObjectivesFrame(true);
+  local active, battlefield = IsInInstance();
+  if self.OPTIONS.ENABLED and battlefield == 'pvp' then
+    self.active = active;
+    self:DisableOptions();
+    self:ObjectivesFrame(active);
     self:Activate();
-  else  
-    self.active = false;
-    self:EnableOptions(); 
-    self:ObjectivesFrame(false);
+  elseif not active and not self.options_frame:IsVisible() then
+    self.active = active;
+    self:EnableOptions();
+    self:ObjectivesFrame(active);
     self:Destroy();
   end
 end
 
 function MrTarget:ObjectivesFrame(active)
   if ObjectiveTrackerFrame then
-    if active then ObjectiveTracker_Collapse();  
-    else ObjectiveTracker_Expand();
+    if active and not ObjectiveTrackerFrame.collapsed then
+      ObjectiveTracker_Collapse();
+      self.objectives = true;
+    elseif not active and self.objectives and ObjectiveTrackerFrame.collapsed then
+      ObjectiveTracker_Expand();
+      self.objectives = false;
     end
-    ObjectiveTracker_Update();
   end
 end
 
@@ -76,8 +93,7 @@ function MrTarget:PlayerLogin()
   self.player.NAME = UnitName('player');
   self.player.CLASS = select(2, UnitClass('player'));
   self.player.SPEC = select(2, GetSpecializationInfo(GetSpecialization()));
-  self.player.FACTION = GetBattlefieldArenaFaction(); 
-  MrTargetRange:UpdateSpells();
+  self.player.FACTION = GetBattlefieldArenaFaction();
 end
 
 function MrTarget:HelloWorld()
@@ -86,13 +102,13 @@ function MrTarget:HelloWorld()
 end
 
 function MrTarget:Options()
-  OPTIONS = OPTIONS or {};
-  if not OPTIONS or OPTIONS.VERSION ~= self.version then
-    OPTIONS = DEFAULT_OPTIONS;
+  self.OPTIONS = MRTARGET_OPTIONS or nil;
+  if not self.OPTIONS or self.OPTIONS.VERSION ~= self.version then
+    self.OPTIONS = DEFAULT_OPTIONS;
   else
     for k, value in pairs(DEFAULT_OPTIONS) do
-      if OPTIONS[k] == nil then
-        OPTIONS[k] = value;
+      if self.OPTIONS[k] == nil then
+        self.OPTIONS[k] = value;
       end
     end
   end
@@ -104,13 +120,13 @@ function MrTarget:InitOptions()
   self.options_frame.name = GetAddOnMetadata('MrTarget', 'Title');
   self.options_frame.Title:SetText(string.upper('Battlegrounds'));
   self.options_frame.Subtitle:SetText('MrTarget '..self.version_text);
-  self.options_frame.okay = function() MrTarget:SaveAllOptions(); end;
+  self.options_frame.okay = function() MrTarget:SaveOptions(); end;
   self.options_frame.default = function() MrTarget:DefaultOptions(); end;
   self.options_frame.cancel = function() MrTarget:CancelOptions(); end;
   self.options_frame:SetScript('OnHide', function(self) MrTarget:CloseOptions(); end);
   self.options_frame:SetScript('OnShow', function(self) MrTarget:OpenOptions(); end);
   InterfaceOptions_AddCategory(self.options_frame);
-  self:SetOptions(OPTIONS);
+  self:SetOptions(self.OPTIONS);
 end
 
 function MrTarget:InitNamingOptions(default)
@@ -130,6 +146,7 @@ end
 
 function MrTarget:SetOptions(options)
   self.options_frame.Enabled:SetChecked(options.ENABLED);
+  self.options_frame.Friendly:SetChecked(options.FRIENDLY);
   self.options_frame.Power:SetChecked(options.POWER);
   self.options_frame.Range:SetChecked(options.RANGE);
   self.options_frame.Targeted:SetChecked(options.TARGETED);
@@ -145,27 +162,25 @@ function MrTarget:SetOptions(options)
 end
 
 function MrTarget:SaveOptions()
-  OPTIONS.ENABLED = self.options_frame.Enabled:GetChecked();
-  OPTIONS.POWER = self.options_frame.Power:GetChecked();
-  OPTIONS.RANGE = self.options_frame.Range:GetChecked();
-  OPTIONS.TARGETED = self.options_frame.Targeted:GetChecked();
-  OPTIONS.AURAS = self.options_frame.Auras:GetChecked();
-  OPTIONS.BORDERLESS = self.options_frame.Borderless:GetChecked();
-  OPTIONS.ICONS = self.options_frame.Icons:GetChecked();
-  OPTIONS.SIZE = self.options_frame.Size:GetValue();
+  MRTARGET_OPTIONS = self.OPTIONS;
+  MRTARGET_OPTIONS.ENABLED = self.options_frame.Enabled:GetChecked();
+  MRTARGET_OPTIONS.FRIENDLY = self.options_frame.Friendly:GetChecked();
+  MRTARGET_OPTIONS.POWER = self.options_frame.Power:GetChecked();
+  MRTARGET_OPTIONS.RANGE = self.options_frame.Range:GetChecked();
+  MRTARGET_OPTIONS.TARGETED = self.options_frame.Targeted:GetChecked();
+  MRTARGET_OPTIONS.AURAS = self.options_frame.Auras:GetChecked();
+  MRTARGET_OPTIONS.BORDERLESS = self.options_frame.Borderless:GetChecked();
+  MRTARGET_OPTIONS.ICONS = self.options_frame.Icons:GetChecked();
+  MRTARGET_OPTIONS.SIZE = self.options_frame.Size:GetValue();
 end
 
-function MrTarget:SaveAllOptions()
-  self:SaveOptions();
-end
-
-function MrTarget:CancelOptions() MrTarget:SetOptions(OPTIONS); end
+function MrTarget:CancelOptions() MrTarget:SetOptions(self.OPTIONS); end
 function MrTarget:DefaultOptions() self:SetOptions(DEFAULT_OPTIONS); end
-function MrTarget:QuickSave() self:SaveOptions(); end
 
 function MrTarget:DisableOptions()
   UIDropDownMenu_DisableDropDown(self.options_frame.Naming);
   self.options_frame.Enabled:Disable();
+  self.options_frame.Friendly:Disable();
   self.options_frame.Power:Disable();
   self.options_frame.Auras:Disable();
   self.options_frame.Borderless:Disable();
@@ -175,56 +190,73 @@ end
 function MrTarget:EnableOptions()
   UIDropDownMenu_EnableDropDown(self.options_frame.Naming);
   self.options_frame.Enabled:Enable();
+  self.options_frame.Friendly:Enable();
   self.options_frame.Power:Enable();
   self.options_frame.Auras:Enable();
   self.options_frame.Borderless:Enable();
   self.options_frame.Icons:Enable();
 end
 
-function MrTarget:SetOption(option, value) 
-  OPTIONS[string.upper(option)] = value; 
+function MrTarget:SetOption(option, value)
+  self.OPTIONS[string.upper(option)] = value;
   self:OpenOptions();
 end
 
 function MrTarget:SetOptionPosition(position)
+  self:SetOptionPositionHARMFUL(position.HARMFUL);
+  self:SetOptionPositionHELPFUL(position.HELPFUL);
+end
+
+function MrTarget:SetOptionPositionHARMFUL(position)
   self.frames.HARMFUL.frame:ClearAllPoints();
-  local ok, point, relativeTo, relativePoint, x, y = pcall(unpack, position.HARMFUL);
+  local ok, point, relativeTo, relativePoint, x, y = pcall(unpack, position);
   if not ok then point, relativeTo, relativePoint, x, y = unpack(DEFAULT_OPTIONS.POSITION.HARMFUL);
   end
   self.frames.HARMFUL.frame:SetPoint(point, relativeTo, relativePoint, x, y);
 end
 
+function MrTarget:SetOptionPositionHELPFUL(position)
+  self.frames.HELPFUL.frame:ClearAllPoints();
+  local ok, point, relativeTo, relativePoint, x, y = pcall(unpack, position);
+  if not ok then point, relativeTo, relativePoint, x, y = unpack(DEFAULT_OPTIONS.POSITION.HELPFUL);
+  end
+  self.frames.HELPFUL.frame:SetPoint(point, relativeTo, relativePoint, x, y);
+end
+
 function MrTarget:SetOptionSize(size)
+  self.frames.HELPFUL.frame:SetScale(size/100);
   self.frames.HARMFUL.frame:SetScale(size/100);
 end
 
 function MrTarget:OpenOptions()
   if not self.active then
-    if OPTIONS.ENABLED then
+    if self.OPTIONS.ENABLED then
       self:ObjectivesFrame(true);
-      self.frames.HARMFUL:CreateStub(RUSSIANS);
-      self.frames.HARMFUL:Show();
-      if OPTIONS.BORDERLESS then 
+      if self.OPTIONS.FRIENDLY then self.frames.HELPFUL:CreateStub(FRIENDS);
+      end
+      self.frames.HARMFUL:CreateStub(ENEMIES);
+      if self.OPTIONS.BORDERLESS then
         self.options_frame.Icons:Show();
-      else 
+      else
         self.options_frame.Icons:Hide();
       end
     else
       self:Destroy();
-    end  
+    end
   end
 end
 
 function MrTarget:CloseOptions()
   if not self.active then
     self:ObjectivesFrame(false);
-    self.options_frame:Hide();  
+    self.options_frame:Hide();
     self:Destroy();
   end
 end
 
-function MrTarget:Destroy()  
+function MrTarget:Destroy()
   self.frames.HARMFUL:Destroy();
+  self.frames.HELPFUL:Destroy();
 end
 
 function MrTarget:AddonLoaded(addon)
@@ -234,9 +266,9 @@ function MrTarget:AddonLoaded(addon)
 end
 
 function MrTarget:OnEvent(event, ...)
-  if event == 'ADDON_LOADED' then self:AddonLoaded(...);  
+  if event == 'ADDON_LOADED' then self:AddonLoaded(...);
   elseif event == 'PLAYER_LOGIN' then self:PlayerLogin();
-  elseif event == 'ACTIVE_TALENT_GROUP_CHANGED' then self:PlayerLogin();  
+  elseif event == 'ACTIVE_TALENT_GROUP_CHANGED' then self:PlayerLogin();
   elseif event == 'PLAYER_ENTERING_WORLD' then self:ZoneChanged();
   elseif event == 'ZONE_CHANGED' then self:ZoneChanged();
   elseif event == 'ZONE_CHANGED_NEW_AREA' then self:ZoneChanged();
