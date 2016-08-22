@@ -170,7 +170,9 @@ function MrTargetGroup:IsOnBattlefield()
   if not self.active then
     for i=1, GetMaxBattlefieldID() do
       local status, name, size = GetBattlefieldStatus(i);
-      if status == 'active' then
+      if name == 'Isle of Conquest' or name == 'Alterac Valley' then
+        self.active = false;
+      elseif status == 'active' then
         self.active = true;
       end
     end

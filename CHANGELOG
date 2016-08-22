@@ -1,5 +1,14 @@
-MrTarget v3.1.2
+MrTarget v3.1.3
 =====================================================================
+
+Warlords of Draenor v6.2.3
+---------------------------------------------------------------------
+18/11/2015
+v3.1.3
+Updated to support patch 6.2.3 (60200)
+Party frames no longer shown by default
+Auras now obey orientation
+Disabled for Isle of Conquest and Alterac Valley
 
 Warlords of Draenor v6.2.2
 ---------------------------------------------------------------------
