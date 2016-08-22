@@ -50,7 +50,8 @@
         </Texture>
       </Layer>
       <Layer level="ARTWORK">
-        <FontString name="$parentName" inherits="GameFontHighlight" parentKey="name" justifyH="LEFT">
+        <FontString name="$parentName" inherits="GameFontHighlight" parentKey="name" justifyH="LEFT" wordwrap="false">
+          <FontHeight val="12"/>
           <Anchors>
             <Anchor point="TOPLEFT" relativeTo="$parent" relativePoint="TOPLEFT" x="15" y="-2"/>
             <Anchor point="TOPRIGHT" relativeTo="$parent" relativePoint="TOPRIGHT" x="-3" y="-3.2"/>
@@ -58,7 +59,7 @@
         </FontString>
       </Layer>
       <Layer level="ARTWORK">
-        <FontString name="$parentSpec" inherits="GameFontNormalSmall" parentKey="spec" justifyH="LEFT">
+        <FontString name="$parentSpec" inherits="GameFontNormalSmall" parentKey="spec" justifyH="LEFT" wordwrap="false">
           <Anchors>
             <Anchor point="TOPLEFT" relativeTo="$parentName" relativePoint="BOTTOMLEFT" x="0" y="0"/>
             <Anchor point="TOPRIGHT" relativeTo="$parentName" relativePoint="BOTTOMRIGHT" x="0" y="0"/>
@@ -73,6 +74,13 @@
             <Anchor point="TOPRIGHT" relativeTo="$parent" relativePoint="TOPLEFT" x="-1" y="0"/>
           </Anchors>
         </Texture>
+      </Layer>
+      <Layer level="ARTWORK">
+        <FontString name="$parentTargeted" inherits="TextStatusBarTextRed" parentKey="targeted" justifyH="RIGHT">
+          <Anchors>
+            <Anchor point="TOPRIGHT" relativeTo="$parent" relativePoint="TOPRIGHT" x="0" y="-2" />
+          </Anchors>
+        </FontString>
       </Layer>
       <Layer level="OVERLAY">
         <Texture name="$parentTargetHighlight" parentKey="targetHighlight" forceAlpha="true" hidden="true" file="Interface\RaidFrame\Raid-FrameHighlights">

@@ -92,6 +92,18 @@
       <OnDragStop> self:SavePosition(); </OnDragStop>
     </Scripts>
   </Frame>
+  <Font name="TextStatusBarTextLargeBorderless" font="Fonts\ARIALN.ttf" outline="NORMAL" virtual="true">
+    <Color r="1.0" g="1.0" b="1.0"/>
+    <FontHeight val="13"/>
+  </Font>
+  <Font name="TextStatusBarTextRed" font="Fonts\FRIZQT__.TTF" outline="NORMAL" virtual="true">
+    <Color r="1.0" g="0.0" b="0.0"/>
+    <FontHeight val="13"/>
+  </Font>
+  <Font name="TextStatusBarTextRedBorderless" font="Fonts\ARIALN.ttf" outline="NORMAL" virtual="true">
+    <Color r="1.0" g="0.0" b="0.0"/>
+    <FontHeight val="14"/>
+  </Font>
   <Font name="GameFontHighlightBorderless" inherits="GameFontHighlight" font="Fonts\ARIALN.ttf" virtual="true">
     <FontHeight val="13"/>
   </Font>
