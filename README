@@ -1,43 +1,33 @@
-MrTarget v2.2.3
+MrTarget v3.0.1
 =====================================================================
 Copyright (C) 2014 Lock of War, Developmental (Pty) Ltd
 
-MrT provides RAID style PvP ENEMY Unit Frames; and
-Changes RUSSIAN Player Names for Target Calling purposes
+RAID STYLE ENEMY UNIT FRAMES in BATTLEGROUNDS
+POKEMON NAME for RUSSIAN TARGET CALLING
 
-Supports Warlords of Draenor v6.1.2
+Supports Warlords of Draenor v6.2.0
 
-PLEASE send any bugs or feedback to mrtarget@lockofwar.com
-or leave us a COMMENT at http://www.curse.com/addons/wow/mrtarget
-http://lockofwar.com LAUNCHING VERY SOON
-FOLLOW HIM at http://twitter.com/lockofwar for updates
+CHECK OUT THE ADDON IN ACTION ON OUR YOUTUBE CHANNEL
+http://youtube.com/c/lockofwar 
 
-Drop us a mail if you would like to be a BETA TESTER for upcoming versions.
+SEND BUGS or FEATURE REQUESTS TO
+http://twitter.com/renevatium OR mrtarget@lockofwar.com
 
-Now with BORDERLESS (SHADOWED) UI option!
-RANGE tracking enabled (pls forward any issues, thank you)
-Friendly TARGET COUNT enabled
-Russian names can now be TRANSLITERATED/TRANSMUTED
+WANT to BETA TEST NEW VERSIONS? We always need testers: mrtarget@lockofwar.com 
 
-Works in ARENA and BATTLEGROUNDS
+Display all enemy unit frames up to a maximum of 15
 Right-click drag to MOVE (only while options panel is open)
-Units are sorted ALPHABETICALLY, then by role
-
-Objectives frame will be hidden during battle
+Units are sorted ALPHABETICALLY, then by CLASS, then by ROLE
+Objectives frame will be collapsed during battle
 To avoid taint, options that alter the UI are disabled during battle
 
-Thanks for all the feedback guys! Keep the suggestions coming, the more
-we know, the better we can make the experience.
+MORE FEEDBACK PLEASE!
+We want to hear you ideas/issues
 
 SLASH COMMANDS
 ---------------------------------------------------------------------
 /mrtarget, /mrt hide|show - Quick hide/show for during battle
 /mrtarget, /mrt - Open interface options panel
-
-LIMITATIONS
----------------------------------------------------------------------
-Display all enemy unit frames up to a maximum of 15.
-In 40 man battlegrounds only the first 15 after sort will display.
 
 LICENSE
 ---------------------------------------------------------------------

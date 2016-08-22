@@ -1,6 +1,26 @@
-MrTarget v2.2.3
+MrTarget v3.0.1
 =====================================================================
 Copyright (C) 2014 Lock of War, Developmental (Pty) Ltd
+
+Warlords of Draenor v6.2.0
+---------------------------------------------------------------------
+23/07/2015
+v3.0.1
+Improved targeting 
+Improved unit detection
+Switch from UNIT_HEALTH to UNIT_HEALTH_FREQUENT event
+Added UPDATE_MOUSEOVER_UNIT event
+
+17/07/2015
+v3.0.0
+Total rebuild for patch 6.2.0 (60200)
+Dropepd arena functionality (New arena addon coming soon)  
+New raid frames (party frames for HEALERS coming soon)
+New unit frames
+New aura system
+New range detection system
+Insane performance improvement
+Upgraded UI elements
 
 Warlords of Draenor v6.1.2
 ---------------------------------------------------------------------

@@ -1,10 +1,10 @@
 <Ui xmlns="http://www.blizzard.com/wow/ui/"
   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
   xsi:schemaLocation="http://www.blizzard.com/wow/ui/..\FrameXML\UI.xsd">
-  <Button name="MrTargetUnitFrameTemplate" inherits="SecureUnitButtonTemplate" frameStrata="MEDIUM" virtual="true" hidden="true">
+  <Button name="MrTargetUnitTemplate" inherits="SecureUnitButtonTemplate" frameStrata="MEDIUM" virtual="true" hidden="true">
     <Size x="90" y="36"/>
     <Anchors>
-      <Anchor point="TOPLEFT" x="2.6" y="-6"/>
+      <Anchor point="TOPLEFT" x="3" y="-5"/>
     </Anchors>
     <Layers>
       <Layer level="BACKGROUND">
@@ -44,115 +44,68 @@
         <Texture name="$parentVertRightBorder" parentKey="vertRightBorder" vertTile="true" forceAlpha="true" file="Interface\RaidFrame\Raid-VSeparator">
           <Size x="8" y="0"/>
           <Anchors>
-            <Anchor point="TOPLEFT" relativeTo="$parent" relativePoint="TOPRIGHT" x="-1" y="0"/>
-            <Anchor point="BOTTOMLEFT" relativeTo="$parent" relativePoint="BOTTOMRIGHT" x="-1" y="0"/>
+            <Anchor point="TOPLEFT" relativeTo="$parent" relativePoint="TOPRIGHT" x="-2" y="0"/>
+            <Anchor point="BOTTOMLEFT" relativeTo="$parent" relativePoint="BOTTOMRIGHT" x="-2" y="0"/>
           </Anchors>
         </Texture>
       </Layer>
       <Layer level="ARTWORK">
-        <FontString name="$parentName" inherits="GameFontHighlight" parentKey="name" justifyH="LEFT" wordwrap="false">
+        <FontString name="$parentName" inherits="GameFontHighlight" parentKey="NAME" justifyH="LEFT" wordwrap="false">
           <FontHeight val="12"/>
           <Anchors>
             <Anchor point="TOPLEFT" relativeTo="$parent" relativePoint="TOPLEFT" x="15" y="-2"/>
             <Anchor point="TOPRIGHT" relativeTo="$parent" relativePoint="TOPRIGHT" x="-3" y="-3.2"/>
           </Anchors>
         </FontString>
-      </Layer>
-      <Layer level="ARTWORK">
-        <FontString name="$parentSpec" inherits="GameFontNormalSmall" parentKey="spec" justifyH="LEFT" wordwrap="false">
+        <FontString name="$parentSpec" inherits="GameFontNormalSmall" parentKey="SPEC" justifyH="LEFT" wordwrap="false">
           <Anchors>
             <Anchor point="TOPLEFT" relativeTo="$parentName" relativePoint="BOTTOMLEFT" x="0" y="0"/>
             <Anchor point="TOPRIGHT" relativeTo="$parentName" relativePoint="BOTTOMRIGHT" x="0" y="0"/>
           </Anchors>
         </FontString>
-      </Layer>
-      <Layer level="ARTWORK">
-        <Texture name="$parentSpecIcon" parentKey="specIcon" forceAlpha="true" hidden="false">
+        <Texture name="$parentSpecIcon" parentKey="SPEC_ICON" forceAlpha="true" hidden="true">
           <TexCoords left="0.1" right="0.9" top="0.1" bottom="0.9"/>
           <Size x="35" y="35"/>
           <Anchors>
             <Anchor point="TOPRIGHT" relativeTo="$parent" relativePoint="TOPLEFT" x="-1" y="0"/>
           </Anchors>
         </Texture>
-      </Layer>
-      <Layer level="ARTWORK">
-        <FontString name="$parentTargeted" inherits="TextStatusBarTextRed" parentKey="targeted" justifyH="RIGHT">
+        <FontString name="$parentTargeted" inherits="TextStatusBarTextRed" parentKey="TARGETED" justifyH="RIGHT">
           <Anchors>
             <Anchor point="TOPRIGHT" relativeTo="$parent" relativePoint="TOPRIGHT" x="0" y="-2" />
           </Anchors>
         </FontString>
       </Layer>
       <Layer level="OVERLAY">
-        <Texture name="$parentTargetHighlight" parentKey="targetHighlight" forceAlpha="true" hidden="true" file="Interface\RaidFrame\Raid-FrameHighlights">
+        <Texture name="$parentRoleIcon" parentKey="ROLE_ICON" forceAlpha="true" hidden="false">
+          <TexCoords left="0" right="0.296875" top="0.015625" bottom="0.3125"/>
+          <Size x="12" y="12"/>
+          <Anchors>
+            <Anchor point="TOPRIGHT" relativeTo="$parent" relativePoint="TOPLEFT" x="2.5" y="-2.5"/>
+          </Anchors>
+        </Texture>
+        <Texture name="$parentHover" parentKey="HOVER" forceAlpha="true" hidden="true" file="Interface\RaidFrame\Raid-FrameHighlights">
           <TexCoords left="0.00781250" right="0.55468750" top="0.28906250" bottom="0.55468750"/>
         </Texture>
       </Layer>
     </Layers>
     <Frames>
-      <StatusBar name="$parentHealthBar" parentKey="healthBar" useParentLevel="true">
+      <StatusBar name="$parentHealthBar" parentKey="HEALTH_BAR" useParentLevel="true">
         <Anchors>
           <Anchor point="TOPLEFT" relativeTo="$parent" relativePoint="TOPLEFT" x="1" y="-1"/>
           <Anchor point="BOTTOMRIGHT" relativeTo="$parent" relativePoint="BOTTOMRIGHT" x="-1" y="9"/>
         </Anchors>
-        <BarTexture file="Interface\RaidFrame\Raid-Bar-Hp-Fill" layer="BORDER" forceAlpha="true"/>
+        <BarTexture file="Interface\RaidFrame\Raid-Bar-Hp-Fill" layer="BACKGROUND" forceAlpha="true"/>
       </StatusBar>
-      <StatusBar name="$parentPowerBar" parentKey="powerBar" useParentLevel="true">
+      <StatusBar name="$parentPowerBar" parentKey="POWER_BAR" useParentLevel="true">
         <Anchors>
           <Anchor point="TOPLEFT" relativeTo="$parentHealthBar" relativePoint="BOTTOMLEFT" x="0" y="-2"/>
           <Anchor point="BOTTOMRIGHT" relativeTo="$parent" relativePoint="BOTTOMRIGHT" x="-1" y="1"/>
         </Anchors>
-        <BarTexture file="Interface\RaidFrame\Raid-Bar-Resource-Fill" layer="BORDER" forceAlpha="true"/>
+        <BarTexture file="Interface\RaidFrame\Raid-Bar-Resource-Fill" layer="BACKGROUND" forceAlpha="true"/>
       </StatusBar>
-      <Button name="$parentRoleIcon" parentKey="roleIcon">
-        <Size x="12" y="12"/>
-        <Anchors>
-          <Anchor point="TOPRIGHT" relativeTo="$parentName" relativePoint="TOPLEFT" x="-1" y="0"/>
-        </Anchors>
-        <Layers>
-          <Layer level="ARTWORK">
-            <Texture name="$parentIcon" parentKey="icon" setAllPoints="true" file="Interface\LFGFrame\UI-LFG-ICON-PORTRAITROLES">
-              <TexCoords left="0" right="0.296875" top="0.015625" bottom="0.3125"/>
-            </Texture>
-          </Layer>
-        </Layers>
-      </Button>
+      <Frame name="$parentUpdateTargeted" parentKey="UPDATE_TARGETED" hidden="false">
+      </Frame>
     </Frames>
-    <Scripts>
-      <OnEnter> MrTarget:OnEnter(self); </OnEnter>
-      <OnLeave> MrTarget:OnLeave(self); </OnLeave>
-      <OnDragStart> MrTarget:ChangePosition(); </OnDragStart>
-      <OnDragStop> MrTarget:SavePosition(); </OnDragStop>
-    </Scripts>
-  </Button>
-  <Button name="MrTargetUnitFrameAuraIconTemplate" virtual="true" enableMouse="false" hidden="false">
-    <Size x="36" y="36"/>
-    <Layers>
-      <Layer level="ARTWORK">
-        <Texture name="$parentIcon" parentKey="icon" setAllPoints="true"/>
-      </Layer>
-      <Layer level="ARTWORK">
-        <FontString name="$parentTime" inherits="TextStatusBarTextLarge" parentKey="time" justifyH="LEFT">
-          <Anchors>
-            <Anchor point="BOTTOMLEFT" relativeTo="$parent" relativePoint="BOTTOMLEFT" x="0" y="1"/>
-            <Anchor point="BOTTOMRIGHT" relativeTo="$parent" relativePoint="BOTTOMRIGHT" x="0" y="1"/>
-          </Anchors>
-        </FontString>
-      </Layer>
-    </Layers>
-    <Scripts>
-      <OnEnter>
-        if self.id then
-          GameTooltip_SetDefaultAnchor(GameTooltip, self);
-          GameTooltip:SetSpellByID(self.id);
-          GameTooltip:Show();
-        end
-      </OnEnter>
-      <OnLeave>
-        if GameTooltip:IsVisible() then
-          GameTooltip:Hide();
-          GameTooltip:ClearLines()
-        end
-      </OnLeave>
-    </Scripts>
   </Button>
 </Ui>
