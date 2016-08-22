@@ -1,5 +1,5 @@
 --
--- MrTarget v2.0.2
+-- MrTarget v2.0.3
 -- =====================================================================
 -- Copyright (C) 2014 Lock of War, Developmental (Pty) Ltd
 --
@@ -13,7 +13,7 @@
 -- For more information see the README and LICENSE files respectively
 --
 
-local VERSION = 'v2.0.2';
+local VERSION = 'v2.0.3';
 
 local MAX_FRAMES = 15;
 local MAX_AURAS = 5;
@@ -54,10 +54,13 @@ local CHAT_CHANNEL = 'INSTANCE_CHAT';
 local CHAT_PREFIX = 'MrTarget';
 
 local DEFAULT_OPTIONS = {
+  ['ARENA']=true,
+  ['BATTLEGROUNDS']=true,
   ['SIZE']=100,
   ['SET']='Pokemon',
   ['MAX_FRAMES']=15,
-  ['MAX_AURAS']=5
+  ['MAX_AURAS']=5,
+  ['RENAME']=true
 };
 
 local NAME_ACTIVE = true;
@@ -188,7 +191,7 @@ function MrTarget:GetName(name, insert)
   if NAME_ACTIVE and name then
     if NAME_READABLE[name] == nil then
       if insert then
-        if self:IsUTF8(name) and NAME_OPTIONS[NAME_COUNT] then
+        if OPTIONS.RENAME and NAME_OPTIONS[NAME_COUNT] and self:IsUTF8(name) then
           NAME_READABLE[name] = NAME_OPTIONS[NAME_COUNT];
           NAME_COUNT = NAME_COUNT+1;
         else
@@ -454,10 +457,12 @@ function MrTarget:UpdateZone()
     self:Hide();
   end
   self.inInstance, self.instanceType = IsInInstance();
-  if self.instanceType == 'pvp' then
+  if self.instanceType == 'pvp' and OPTIONS.BATTLEGROUNDS then
     self:Initialize();
-  elseif self.instanceType == 'arena' then
+  elseif self.instanceType == 'arena' and OPTIONS.ARENA then
     self:Initialize();
+  elseif InterfaceOptionsFrame:IsShown() then
+    self:OpenDebugFrame();
   else
     self:Destroy();
   end
@@ -618,6 +623,7 @@ function MrTarget:UpdateFrames()
       self:HideAuras(FRAMES[i]);
       if not InCombatLockdown() then
         FRAMES[i]:SetAttribute('macrotext1', '/targetexact '..UNITS[i].target);
+        FRAMES[i]:SetAttribute('macrotext2', '/targetexact '..UNITS[i].target..'\n/focus\n/targetlasttarget');
         FRAMES[i]:Show();
       end
       ENEMIES[UNITS[i].uid] = i;
@@ -640,9 +646,11 @@ function MrTarget:CreateFrames()
       FRAMES[i] = CreateFrame('Button', 'MrTargetUnitFrame'..i, self, 'MrTargetUnitFrameTemplate');
       FRAMES[i]:EnableMouse(true);
       FRAMES[i]:RegisterForDrag('RightButton');
-      FRAMES[i]:RegisterForClicks('LeftButtonUp');
+      FRAMES[i]:RegisterForClicks('LeftButtonUp', 'RightButtonUp');
       FRAMES[i]:SetAttribute('type1', 'macro');
+      FRAMES[i]:SetAttribute('type2', 'macro');
       FRAMES[i]:SetAttribute('macrotext1', '');
+      FRAMES[i]:SetAttribute('macrotext2', '');
       for a=1, MAX_AURAS do
         FRAMES[i]['auraIcon'..a] = CreateFrame('Button', FRAMES[i]:GetName()..'AuraIcon'..a, FRAMES[i], 'MrTargetUnitFrameAuraIconTemplate');
         FRAMES[i]['auraIcon'..a]:ClearAllPoints();
@@ -684,6 +692,18 @@ function MrTarget:GetRoles()
   end
 end
 
+function MrTarget:ObjectivesFrame()
+  if ObjectiveTrackerFrame then
+    if not InCombatLockdown() then
+      if self.instanceType == 'none' then
+        ObjectiveTrackerFrame:Show();
+      else
+        ObjectiveTrackerFrame:Hide();
+      end
+    end
+  end
+end
+
 function MrTarget:Initialize()
   UNITS = {};
   self:RegisterEvent('PLAYER_DEAD');
@@ -698,6 +718,10 @@ function MrTarget:Initialize()
   self:RegisterEvent('ARENA_OPPONENT_UPDATE');
   self:RegisterEvent('UPDATE_BATTLEFIELD_SCORE');
   self:SetScript('OnUpdate', self.OnUpdate);
+  self:ObjectivesFrame();
+  if self.instanceType == 'pvp' then
+    RequestBattlefieldScoreData();
+  end
 end
 
 function MrTarget:Destroy()
@@ -708,6 +732,7 @@ function MrTarget:Destroy()
   end
   UNITS = {};
   self.battlefield = nil;
+  self:ObjectivesFrame();
   self:UnregisterEvent('PLAYER_DEAD');
   self:UnregisterEvent('UNIT_AURA');
   self:UnregisterEvent('UNIT_TARGET');
@@ -776,7 +801,7 @@ end
 function MrTarget:CloseDebugFrame()
   if not self.battlefield then
     if not InCombatLockdown() then
-      self:Hide();
+      self:Destroy();
     else
       self:RegisterEvent('PLAYER_REGEN_ENABLED');
     end
@@ -819,15 +844,24 @@ function MrTarget:InitSetOptions()
 end
 
 function MrTarget:LoadOptions(options)
+  self.Options.Arena:SetChecked(options.ARENA);
+  self.Options.Battlegrounds:SetChecked(options.BATTLEGROUNDS);
+  self.Options.Rename:SetChecked(options.RENAME);
+  UIDropDownMenu_SetSelectedValue(self.Options.Set, options.SET);
+  if not self.Options.Rename:GetChecked() then
+    UIDropDownMenu_DisableDropDown(self:GetParent().Set);
+  end
+  NAME_OPTIONS = NAME_SETS[options.SET];
   self:Resize(options.SIZE);
   self.Options.Size:SetValue(options.SIZE);
-  UIDropDownMenu_SetSelectedValue(self.Options.Set, options.SET);
-  NAME_OPTIONS = NAME_SETS[options.SET];
   MAX_FRAMES = options.MAX_FRAMES or DEFAULT_OPTIONS.MAX_FRAMES;
   MAX_AURAS = options.MAX_AURAS or DEFAULT_OPTIONS.MAX_AURAS;
 end
 
 function MrTarget:SaveOptions()
+  OPTIONS.ARENA = self.Options.Arena:GetChecked();
+  OPTIONS.BATTLEGROUNDS = self.Options.Battlegrounds:GetChecked();
+  OPTIONS.RENAME = self.Options.Rename:GetChecked();
   OPTIONS.SET = UIDropDownMenu_GetSelectedValue(self.Options.Set);
   OPTIONS.SIZE = self.Options.Size:GetValue();
 end
@@ -896,7 +930,7 @@ function MrTarget:OnEvent(event, arg1, arg2, arg3, arg4)
   elseif event == 'PLAYER_REGEN_ENABLED' then
     self:UnregisterEvent('PLAYER_REGEN_ENABLED');
     if self.instanceType == 'none' then
-      self:Hide();
+      self:Destroy();
     end
   elseif event == 'PLAYER_LOGOUT' then
     self:PlayerLogout();
@@ -983,7 +1017,13 @@ MrTarget:RegisterEvent('ADDON_LOADED');
 SLASH_MRTARGET1 = '/mrt';
 SLASH_MRTARGET2 = '/mrtarget';
 function SlashCmdList.MRTARGET(cmd, box)
-  InterfaceOptionsFrame_OpenToCategory(MrTarget.Options);
-  InterfaceOptionsFrame_OpenToCategory(MrTarget.Options);
-  MrTarget:OpenDebugFrame();
+  if cmd == 'show' then
+    MrTarget:UpdateZone();
+  elseif cmd == 'hide' then
+    MrTarget:Destroy();
+  else
+    InterfaceOptionsFrame_OpenToCategory(MrTarget.Options);
+    InterfaceOptionsFrame_OpenToCategory(MrTarget.Options);
+    MrTarget:OpenDebugFrame();
+  end
 end

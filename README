@@ -1,21 +1,28 @@
-MrTarget v2.0.2
+MrTarget v2.0.3
 =====================================================================
 Copyright (C) 2014 Lock of War, Developmental (Pty) Ltd
-
-Supports Warlords of Draenor v6.0.3
 
 MrT provides RAID style PvP ENEMY Unit Frames; and
 Replaces UNREADABLE Player Names for Target Calling purposes
 
-Works in BATTLEGROUNDS and ARENA
+Supports Warlords of Draenor v6.0.3
 
+PLEASE send any bugs or feedback to mrtarget@lockofwar.com
+or leave us a COMMENT at http://www.curse.com/addons/wow/mrtarget
+http://lockofwar.com LAUNCHING SOON
+FOLLOW HIM at http://twitter.com/lockofwar for updates
+
+Works in ARENA and BATTLEGROUNDS
+Now with right-click FOCUS
+Right-click drag to MOVE (frame lock coming soon)
 RESIZABLE from interface options panel /mrt
-LEADERS CHOICE name replacement sets
+Units are sorted ALPHABETICALLY, then by role
+Objectives frame will be hidden during battle
 
-RIGHT CLICK DRAG to MOVE (position maintained internally).
-Units are sorted ALPHABETICALLY, then by role: TANK, HEALER, DAMAGER.
+Thanks for all the feedback guys! Keep the suggestions coming, the more
+we know, the better we can make the experience.
 
-PLEASE send any bugs or feedback to mrtarget@lockofwar.com.
+RANGE tracking is in development.
 
 BLIZZARD
 ---------------------------------------------------------------------
@@ -26,6 +33,7 @@ we've gotten someone's attenion, especially yours. Respect.
 
 SLASH COMMANDS
 ---------------------------------------------------------------------
+/mrtarget, /mrt hide|show - Quick hide/show for during battle
 /mrtarget, /mrt - Open interface options panel
 
 LIMITATIONS

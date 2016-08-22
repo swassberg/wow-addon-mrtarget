@@ -1,9 +1,19 @@
-MrTarget v2.0.2
+MrTarget v2.0.3
 =====================================================================
 Copyright (C) 2014 Lock of War, Developmental (Pty) Ltd
 
 Warlords of Draenor v6.0.3
 ---------------------------------------------------------------------
+11/12/2014
+v2.0.3
+Added enable/disable option for battlefields
+Added enable/disable option for renaming
+Added right click /focus (Dazian)
+Added hide/show slash commands
+Fixed bug: not loading immediately in BG (Kelsey)
+Fixed bug: clearing randomly (ed)
+Objectives frame hides
+
 01/12/2014
 v2.0.2
 Update arena auras
@@ -57,7 +67,7 @@ First Arena build [disabled]
 
 09/09/2014
 v1.0.4
-Fixed Auctionator error (thanks LP)
+Fixed Auctionator error (LP)
 
 30/08/2014
 v1.0.3
