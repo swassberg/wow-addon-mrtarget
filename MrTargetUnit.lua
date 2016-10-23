@@ -285,8 +285,10 @@ function MrTargetUnit:UnregisterEvents()
 end
 
 function MrTargetUnit:SetFrameStyle()
-  if MrTarget:GetOption('BORDERLESS') then self:SetStyleBorderless();
-  else self:SetStyleDefault();
+  if MrTarget:GetOption('BORDERLESS') then
+    self:SetStyleBorderless();
+  else
+    self:SetStyleDefault();
   end
 end
 
@@ -299,6 +301,9 @@ end
 
 function MrTargetUnit:SetStyleDefault()
   self.frame:EnableDrawLayer('BORDER');
+  self.frame.NAME:ClearAllPoints();
+  self.frame.NAME:SetPoint("TOPLEFT", self.frame, "TOPLEFT", 15, -2);
+  self.frame.NAME:SetPoint("TOPRIGHT", self.frame, "TOPRIGHT", -3, -3.2);
   self.frame.NAME:SetFontObject("GameFontHighlight");
   self.frame.TARGETED:SetFontObject("TextStatusBarTextRed");
   self.frame.HEALTH_BAR:ClearAllPoints();
@@ -320,12 +325,18 @@ function MrTargetUnit:SetStyleDefault()
   self.frame.ROLE_ICON:SetPoint('TOPLEFT', self.frame, 'TOPLEFT', 2.5, -2.5);
   self.frame.ROLE_ICON:SetTexCoord(GetTexCoordsForRole(self.role, false));
   self.frame.ROLE_ICON:Show();
+  self.frame.SPEC:ClearAllPoints();
+  self.frame.SPEC:SetPoint("TOPLEFT", self.frame.NAME, "BOTTOMLEFT", 0, 0);
+  self.frame.SPEC:SetPoint("TOPRIGHT", self.frame.NAME, "BOTTOMRIGHT", 0, 0);
   self.frame.SPEC:Show();
   self.frame.SPEC_ICON:Hide();
 end
 
 function MrTargetUnit:SetStyleBorderless()
   self.frame:DisableDrawLayer('BORDER');
+  self.frame.NAME:ClearAllPoints();
+  self.frame.NAME:SetPoint("TOPLEFT", self.frame, "TOPLEFT", 15, -2);
+  self.frame.NAME:SetPoint("TOPRIGHT", self.frame, "TOPRIGHT", -3, -3.2);
   self.frame.NAME:SetFontObject("GameFontHighlightBorderless");
   self.frame.TARGETED:SetFontObject("TextStatusBarTextRedBorderless");
   self.frame.HEALTH_BAR:ClearAllPoints();

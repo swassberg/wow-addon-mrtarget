@@ -1,4 +1,4 @@
--- MrTarget v4.0.1
+-- MrTarget v4.1.0
 -- =====================================================================
 -- This Work is provided under the Creative Commons
 -- Attribution-NonCommercial-NoDerivatives 4.0 International Public License
@@ -9,13 +9,12 @@
 local BATTLEFIELD_SIZES = { 10, 15, 40 };
 
 local DEFAULT_BATTLEFIELD_OPTIONS = {
-  VERSION=4.01,
   ENABLED=true,
   ENEMY=true,
-  FRIENDLY=false,
+  FRIENDLY=true,
   POSITION={
-    HARMFUL={ 'RIGHT', nil, 'RIGHT', -100, 0 },
-    HELPFUL={ 'LEFT', nil, 'LEFT', 100, 0 }
+    HARMFUL={ 'TOPRIGHT', nil, 'TOPRIGHT', -(GetScreenWidth()*UIParent:GetEffectiveScale())/15, -(GetScreenHeight()*UIParent:GetEffectiveScale())/3 },
+    HELPFUL={ 'TOPLEFT', nil, 'TOPLEFT', (GetScreenWidth()*UIParent:GetEffectiveScale())/15, -(GetScreenHeight()*UIParent:GetEffectiveScale())/3 },
   },
   BORDERLESS=false,
   ICONS=false,
@@ -28,16 +27,26 @@ local DEFAULT_BATTLEFIELD_OPTIONS = {
   COLUMNS=1
 };
 
+function copy(obj, seen)
+  if type(obj) ~= 'table' then return obj end
+  if seen and seen[obj] then return seen[obj] end
+  local s = seen or {}
+  local res = setmetatable({}, getmetatable(obj))
+  s[obj] = res
+  for k, v in pairs(obj) do res[copy(k, s)] = copy(v, s) end
+  return res
+end
+
 local DEFAULT_OPTIONS = {}
 for k,v in pairs(BATTLEFIELD_SIZES) do
-  DEFAULT_OPTIONS[v] = DEFAULT_BATTLEFIELD_OPTIONS;
-  if v > 10 then
-    DEFAULT_OPTIONS[v].AURAS = false;
-    if v == 40 then
-      DEFAULT_OPTIONS[v].COLUMNS = 2;
-    end
-  end
+  DEFAULT_OPTIONS[v] = copy(DEFAULT_BATTLEFIELD_OPTIONS);
 end
+
+DEFAULT_OPTIONS[15].COLUMNS = 2;
+DEFAULT_OPTIONS[15].AURAS = false;
+DEFAULT_OPTIONS[40].COLUMNS = 4;
+DEFAULT_OPTIONS[40].FRIENDLY = false;
+DEFAULT_OPTIONS[40].AURAS = false;
 
 local FRIENDS = {
   'Jaina', 'Uther', 'Anduin', 'Valeera', 'Thrall', 'Gul\'dan', 'Garrosh', 'Arthas',
@@ -74,8 +83,7 @@ MrTarget = CreateFrame('Frame', 'MrTarget', UIParent);
 function MrTarget:Load()
   self.loaded=true;
   self.active=false;
-  self.version=DEFAULT_OPTIONS.VERSION;
-  self.version_text='v4.0.1';
+  self.version='v4.1.0';
   self.difficulty = false;
   self.frames={};
   self.player={};
@@ -148,27 +156,14 @@ function MrTarget:PlayerLogin()
 end
 
 function MrTarget:HelloWorld()
-  local message = '|cFF00FFFF <MrTarget-'..self.version_text..'>|cFFFF0000 Even the Score.|r Type /mrt for interface options.';
+  local message = '|cFF00FFFF <MrTarget-'..self.version..'>|cFFFF0000 Even the Score.|r Type /mrt for interface options.';
   ChatFrame1:AddMessage(message, 0, 0, 0, GetChatTypeIndex('SYSTEM'));
 end
 
 function MrTarget:GetOptions()
   self.OPTIONS = MRTARGET_SETTINGS or MRTARGET_OPTIONS or nil;
-  if not self.OPTIONS then
-    self.OPTIONS = DEFAULT_OPTIONS;
-  else
-    if self.OPTIONS.VERSION < 4.01 or not self.OPTIONS[10] then
-      for k,v in pairs(BATTLEFIELD_SIZES) do
-        self.OPTIONS[v] = self.OPTIONS;
-      end
-    end
-    for i, value in pairs(DEFAULT_OPTIONS) do
-      for k,v in pairs(BATTLEFIELD_SIZES) do
-        if self.OPTIONS[v][i] == nil then
-          self.OPTIONS[v][i] = value;
-        end
-      end
-    end
+  if not self.OPTIONS or not self.OPTIONS[10] then
+    self.OPTIONS = copy(DEFAULT_OPTIONS);
   end
 end
 
@@ -183,7 +178,7 @@ function MrTarget:InitOptions()
     self.options_frame.tabs[v].parent = self.options_frame.name;
     self.options_frame.tabs[v].size = v;
     self.options_frame.tabs[v].Title:SetText(string.upper(v..' Man Battlegrounds'));
-    self.options_frame.tabs[v].Subtitle:SetText('MrTarget '..self.version_text);
+    self.options_frame.tabs[v].Subtitle:SetText('MrTarget '..self.version);
     self.options_frame.tabs[v].okay = function() MrTarget:SaveOptions(); end;
     self.options_frame.tabs[v].default = function() MrTarget:DefaultOptions(); end;
     self.options_frame.tabs[v].cancel = function() MrTarget:CancelOptions(); end;
@@ -251,7 +246,7 @@ function MrTarget:SaveOptions()
   end
 end
 
-function MrTarget:CancelOptions() MrTarget:SetOptions(self.OPTIONS); end
+function MrTarget:CancelOptions() self:SetOptions(self.OPTIONS); end
 function MrTarget:DefaultOptions() self:SetOptions(DEFAULT_OPTIONS); end
 
 function MrTarget:DisableOptions()
@@ -324,6 +319,7 @@ function MrTarget:SetOptionPositionHARMFUL(position)
   if not ok then point, relativeTo, relativePoint, x, y = unpack(DEFAULT_OPTIONS.POSITION.HARMFUL);
   end
   self.frames.HARMFUL.frame:SetPoint(point, relativeTo, relativePoint, x, y);
+  self.frames.HARMFUL:UpdateOrientation();
 end
 
 function MrTarget:SetOptionPositionHELPFUL(position)
@@ -332,6 +328,7 @@ function MrTarget:SetOptionPositionHELPFUL(position)
   if not ok then point, relativeTo, relativePoint, x, y = unpack(DEFAULT_OPTIONS.POSITION.HELPFUL);
   end
   self.frames.HELPFUL.frame:SetPoint(point, relativeTo, relativePoint, x, y);
+  self.frames.HARMFUL:UpdateOrientation();
 end
 
 function MrTarget:SetOptionSize(size)
@@ -345,6 +342,7 @@ end
 
 function MrTarget:OpenOptions(size)
   if not self.active then
+    self:CloseOptions();
     self.size = size;
     self:Initialize();
     if self.OPTIONS[size].ENABLED then
@@ -382,7 +380,6 @@ end
 function MrTarget:Destroy()
   self.frames.HARMFUL:Destroy();
   self.frames.HELPFUL:Destroy();
-  self.size = 40;
 end
 
 function MrTarget:AddonLoaded(addon)

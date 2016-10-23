@@ -279,7 +279,7 @@
           <OnClick>
             MrTarget:SetOption('borderless', self:GetChecked());
             MrTarget:SetOption('icons', self:GetChecked());
-            <!-- self.parent.Icons:SetChecked(self:GetChecked()); -->
+            self:GetParent().Icons:SetChecked(self:GetChecked());
           </OnClick>
         </Scripts>
       </CheckButton>

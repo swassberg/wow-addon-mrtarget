@@ -1,9 +1,15 @@
-MrTarget v4.0.1
+MrTarget v4.1.0
 =====================================================================
 Copyright (C) 2016 Lock of War, Renevatium
 
 Warlords of Draenor v7.0.3
 ---------------------------------------------------------------------
+23/10/2016
+v4.1.0
+Per battlefield configuration
+Fixed non-existant target error
+Prepared for patch 7.1
+
 25/09/2016
 v4.0.1
 Fixed bug causing frames to appear randomly (shol)
@@ -11,7 +17,7 @@ Friendly units option displaying correctly
 Per character configuration (aaron)
 Persistant configuration
 Option to hide enemy frames
-Preparation for next major version
+Preparation for 40man
 Updated copyright text
 
 02/08/2016

@@ -37,7 +37,7 @@ MrTargetGroup = {
   friendly=false,
   update=0,
   tick=1,
-  max=1,
+  max=40,
   frame=nil,
   reverse=false,
   frames={},
@@ -396,6 +396,7 @@ end
 
 function MrTargetGroup:CreateStub(names, max)
   self.next_name = 1;
+  table.wipe(self.units);
   if #self.units == 0 then
     local class, spec = nil, nil;
     for i=1, max do
