@@ -1,6 +1,6 @@
 -- MrTargetAuras
 -- =====================================================================
--- Copyright (C) 2014 Lock of War, Developmental (Pty) Ltd
+-- Copyright (C) 2016 Lock of War, Renevatium
 --
 
 local PVP_AURAS = {};
@@ -68,7 +68,7 @@ function MrTargetAuras:UnsetAura(frame)
 end
 
 function MrTargetAuras:UnitAura(unit)
-  if MrTarget.OPTIONS.AURAS then
+  if MrTarget:GetOption('AURAS') then
     self.auras = table.wipe(self.auras);
     self.count = self:UpdateCarriers(1, unit);
     self.count = self:UpdateDebuff(self.count, unit);

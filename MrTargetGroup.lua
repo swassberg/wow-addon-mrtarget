@@ -1,6 +1,6 @@
 -- MrTargetGroup
 -- =====================================================================
--- Copyright (C) 2014 Lock of War, Developmental (Pty) Ltd
+-- Copyright (C) 2016 Lock of War, Renevatium
 --
 
 local NAME_OPTIONS = {
@@ -13,10 +13,11 @@ local NAME_OPTIONS = {
 local CYRILLIC = {
   ["А"]="A", ["а"]="a", ["Б"]="B", ["б"]="b", ["В"]="V", ["в"]="v", ["Г"]="G", ["г"]="g", ["Д"]="D", ["д"]="d", ["Е"]="E",
   ["е"]="e", ["Ё"]="E", ["ё"]="e", ["Ж"]="Zh", ["ж"]="zh", ["З"]="Z", ["з"]="z", ["И"]="I", ["и"]="i", ["Й"]="I", ["й"]="i",
-  ["К"]="K", ["к"]="k", ["Л"]="L", ["л"]="l", ["М"]="M", ["м"]="m", ["Н"]="N", ["н"]="n", ["О"]="O", ["о"]="o", ["П"]="P", ["п"]="p",
-  ["Р"]="R",["р"]="r", ["С"]="S", ["с"]="s", ["Т"]="T", ["т"]="t", ["У"]="U", ["у"]="u", ["Ф"]="F", ["ф"]="f", ["Х"]="Kh", ["х"]="kh",
-  ["Ц"]="Ts", ["ц"]="ts", ["Ч"]="Ch", ["ч"]="ch", ["Ш"]="Sh", ["ш"]="sh", ["Щ"]="Shch", ["щ"]="shch", ["Ъ"]="Ie", ["ъ"]="ie",
-  ["Ы"]="Y", ["ы"]="y", ["Ь"]="X", ["ь"]="x", ["Э"]="E", ["э"]="e", ["Ю"]="Iu", ["ю"]="iu", ["Я"]="Ia", ["я"]="ia"
+  ["К"]="K", ["к"]="k", ["Л"]="L", ["л"]="l", ["М"]="M", ["м"]="m", ["Н"]="N", ["н"]="n", ["О"]="O", ["о"]="o", ["П"]="P",
+  ["п"]="p", ["Р"]="R", ["р"]="r", ["С"]="S", ["с"]="s", ["Т"]="T", ["т"]="t", ["У"]="U", ["у"]="u", ["Ф"]="F", ["ф"]="f",
+  ["Х"]="Kh", ["х"]="kh", ["Ц"]="Ts", ["ц"]="ts", ["Ч"]="Ch", ["ч"]="ch", ["Ш"]="Sh", ["ш"]="sh", ["Щ"]="Shch", ["щ"]="shch",
+  ["Ъ"]="Ie", ["ъ"]="ie", ["Ы"]="Y", ["ы"]="y", ["Ь"]="X", ["ь"]="x", ["Э"]="E", ["э"]="e", ["Ю"]="Iu", ["ю"]="iu",
+  ["Я"]="Ia", ["я"]="ia"
 };
 
 local ROLES = {};
@@ -36,7 +37,7 @@ MrTargetGroup = {
   friendly=false,
   update=0,
   tick=1,
-  max=15,
+  max=1,
   frame=nil,
   reverse=false,
   frames={},
@@ -66,13 +67,14 @@ local function SortUnits(u,v)
   end
 end
 
-function MrTargetGroup:New(group, friendly, columns)
+function MrTargetGroup:New(group, friendly, columns, max)
   local this = setmetatable({}, MrTargetGroup);
   this.units = setmetatable({}, nil);
   this.frames = setmetatable({}, nil);
   this.group = group;
   this.friendly = friendly;
   this.columns = columns;
+  this.max = max;
   this.frame = CreateFrame('Frame', 'MrTargetGroup'..group, UIParent, 'MrTargetGroupTemplate');
   this.frame:SetScript('OnEvent', function(frame, ...) this:OnEvent(...); end);
   this.frame:SetScript('OnUpdate', function(frame, ...) this:OnUpdate(...); end);
@@ -102,7 +104,7 @@ function MrTargetGroup:SetTarget(unit)
   if unit and unit.frame then
     self.frame.TARGET:ClearAllPoints();
     if self.columns > 1 then
-      if MrTarget.OPTIONS.ICONS then
+      if MrTarget:GetOption('ICONS') then
         self.frame.TARGET:SetPoint('TOPRIGHT', unit.frame, 'TOPLEFT', -4, -2);
       else
         self.frame.TARGET:SetPoint('TOPRIGHT', unit.frame, 'TOPRIGHT', -4, -2);
@@ -141,7 +143,7 @@ function MrTargetGroup:SetAssist(unit)
   if unit and unit.frame then
     self.frame.ASSIST:ClearAllPoints();
     if self.columns > 1 then
-      if MrTarget.OPTIONS.ICONS then
+      if MrTarget:GetOption('ICONS') then
         self.frame.ASSIST:SetPoint('TOPRIGHT', unit.frame, 'TOPLEFT', -6, -4);
       else
         self.frame.ASSIST:SetPoint('TOPRIGHT', unit.frame, 'TOPRIGHT', -6, -4);
@@ -178,6 +180,14 @@ function MrTargetGroup:UnitTarget(unit)
   end
 end
 
+function MrTargetGroup:GetMax()
+  for k,v in pairs({ 10, 15, 40 }) do
+    if #self.units <= v then
+      return v;
+    end
+  end
+end
+
 function MrTargetGroup:HasRaidIndex(name)
   for i=1, GetNumGroupMembers() do
     if GetUnitName('raid'..i, true) == name then
@@ -188,17 +198,7 @@ function MrTargetGroup:HasRaidIndex(name)
 end
 
 function MrTargetGroup:IsOnBattlefield()
-  if not self.active then
-    for i=1, GetMaxBattlefieldID() do
-      local status, name, size = GetBattlefieldStatus(i);
-      if name == 'Isle of Conquest' or name == 'Alterac Valley' then
-        self.active = false;
-      elseif status == 'active' then
-        self.active = true;
-      end
-    end
-  end
-  return self.active;
+  return select(2, IsInInstance()) == 'pvp';
 end
 
 function MrTargetGroup:UpdateBattlefieldScore()
@@ -212,14 +212,16 @@ function MrTargetGroup:UpdateBattlefieldScore()
         local name, _, _, _, _, faction, race, _, class, _, _, _, _, _, _, spec = GetBattlefieldScore(i);
         if (faction == self.faction) == self.friendly then
           class = class or select(2, UnitClass(name));
-          table.insert(self.units, {
-            name=name,
-            display=name,
-            class=class,
-            spec=spec,
-            role=ROLES[class][spec].role,
-            unit=self:HasRaidIndex(name)
-          });
+          if ROLES[class][spec] then
+            table.insert(self.units, {
+              name=name,
+              display=name,
+              class=class,
+              spec=spec,
+              role=ROLES[class][spec].role,
+              unit=self:HasRaidIndex(name)
+            });
+          end
         end
       end
       table.sort(self.units, SortUnits);
@@ -247,16 +249,15 @@ function MrTargetGroup:CreateFrames()
 end
 
 function MrTargetGroup:UpdateLayout()
-  local max = math.max(10, #self.units);
-  for i=1, max do
-    if i > 1 then
+  for i=2, self.max do
+    if self.frames[i] then
       self.frames[i].frame:ClearAllPoints();
-      local rows = math.ceil(max/self.columns);
+      local rows = math.ceil(self.max/self.columns);
       if i > rows then
-        local offset = MrTarget.OPTIONS.ICONS and 36 or 0;
+        local offset = MrTarget:GetOption('ICONS') and 36 or 0;
         self.frames[i].frame:SetPoint('TOPLEFT', self.frames[i-rows].frame, 'TOPRIGHT', offset, 0);
       else
-        local offset = MrTarget.OPTIONS.BORDERLESS and 0 or -1;
+        local offset = MrTarget:GetOption('BORDERLESS') and 0 or -1;
         self.frames[i].frame:SetPoint('TOP', self.frames[i-1].frame, 'BOTTOM', 0, offset);
       end
     end
@@ -291,15 +292,17 @@ function MrTargetGroup:Destroy()
   self.frame:UnregisterEvent('PLAYER_TARGET_CHANGED');
   self.frame:UnregisterEvent('UNIT_TARGET');
   self.units = table.wipe(self.units);
+  self.frame.TARGET:ClearAllPoints();
+  self.frame.ASSIST:ClearAllPoints();
   self:Hide();
 end
 
 function MrTargetGroup:OnUpdate(time)
+  RequestBattlefieldScoreData();
   self.update = self.update + time;
   if self.update < self.tick or (WorldStateScoreFrame and WorldStateScoreFrame:IsShown()) then
     return;
   end
-  RequestBattlefieldScoreData();
   if self.update_units and not InCombatLockdown() and #self.units > 0 then
     for i=1, #self.frames do
       if self.units[i] then
@@ -321,8 +324,8 @@ function MrTargetGroup:OnUpdate(time)
     self:UpdateLayout();
     self.update_units = false;
   end
-  -- self:SetTarget(self.frames[1]);
-  -- self:SetAssist(self.frames[1]);
+  self:SetTarget(self.frames[1]);
+  self:SetAssist(self.frames[1]);
   self.update = 0;
 end
 
@@ -336,9 +339,9 @@ function MrTargetGroup:OnEvent(event, ...)
 end
 
 function MrTargetGroup:GetDisplayName(name)
-  if MrTarget.OPTIONS.NAMING == 'Transmute' then
+  if MrTarget:GetOption('NAMING') == 'Transmute' then
     name = self:Transmute(name);
-  elseif MrTarget.OPTIONS.NAMING == 'Transliterate' then
+  elseif MrTarget:GetOption('NAMING') == 'Transliterate' then
     name = self:Transliterate(name);
   end
   return name;
@@ -391,11 +394,11 @@ local function RandomKey(t)
   return keys[math.random(1, #keys)];
 end
 
-function MrTargetGroup:CreateStub(names)
+function MrTargetGroup:CreateStub(names, max)
   self.next_name = 1;
   if #self.units == 0 then
     local class, spec = nil, nil;
-    for i=1, self.max do
+    for i=1, max do
       class = RandomKey(ROLES);
       spec = RandomKey(ROLES[class]);
       table.insert(self.units, {
@@ -410,11 +413,12 @@ function MrTargetGroup:CreateStub(names)
     end
     table.sort(self.units, SortUnits);
   else
-    for i=1, self.max do
+    for i=1, max do
       self.units[i].display = self:GetDisplayName(names[i]);
     end
   end
   self.update_units = true;
+  self.max = max;
   self:Show();
 end
 
@@ -442,7 +446,7 @@ end
 
 function MrTargetGroup:OnDragStop()
   if InterfaceOptionsFrame:IsShown() then
-    MrTarget.OPTIONS.POSITION[self.group] = self:GetPosition();
+    MrTarget.OPTIONS[self.max].POSITION[self.group] = self:GetPosition();
     self.frame:StopMovingOrSizing();
     self:UpdateOrientation();
   end

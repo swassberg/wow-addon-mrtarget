@@ -1,6 +1,6 @@
- -- MrTargetRange
+-- MrTargetRange
 -- =====================================================================
--- Copyright (C) 2014 Lock of War, Developmental (Pty) Ltd
+-- Copyright (C) 2016 Lock of War, Renevatium
 --
 
 MrTargetRange = {
@@ -8,7 +8,7 @@ MrTargetRange = {
   parent=nil,
   range=nil,
   update=0,
-  frequency=0.1,
+  frequency=0.2,
   harmful={},
   helpful={}
 };

@@ -16,7 +16,7 @@
         </FontString>
         <FontString name="$parentTitleNaming" inherits="GameFontHighlight" justifyH="LEFT" text="Russians">
           <Anchors>
-            <Anchor point="TOPLEFT" relativeTo="$parentTitle" relativePoint="BOTTOMLEFT" x="0" y="-120"/>
+            <Anchor point="TOPLEFT" relativeTo="$parentTitle" relativePoint="BOTTOMLEFT" x="0" y="-140"/>
           </Anchors>
         </FontString>
         <FontString name="$parentTitleSize" inherits="GameFontHighlight" justifyH="LEFT" text="Set Scale">
@@ -51,7 +51,7 @@
     <Frames>
       <CheckButton name="$parentEnabled" inherits="OptionsBaseCheckButtonTemplate" parentKey="Enabled">
         <Anchors>
-          <Anchor point="TOPLEFT" relativeTo="$parentTitle" relativePoint="BOTTOMLEFT" x="-4" y="-2"/>
+          <Anchor point="TOPLEFT" relativeTo="$parentTitle" relativePoint="BOTTOMLEFT" x="-4" y="-4"/>
         </Anchors>
         <Layers>
           <Layer level="ARTWORK">
@@ -68,9 +68,28 @@
           </OnClick>
         </Scripts>
       </CheckButton>
-      <CheckButton name="$parentFriendly" inherits="OptionsBaseCheckButtonTemplate" parentKey="Friendly">
+      <CheckButton name="$parentEnemy" inherits="OptionsBaseCheckButtonTemplate" parentKey="Enemy">
         <Anchors>
           <Anchor point="TOPLEFT" relativeTo="$parentEnabled" relativePoint="BOTTOMLEFT" x="0" y="6"/>
+        </Anchors>
+        <Layers>
+          <Layer level="ARTWORK">
+            <FontString name="$parentText" inherits="GameFontNormalSmall" parentKey="text" text="Display enemy units">
+              <Anchors>
+                <Anchor point="LEFT" relativeTo="$parent" relativePoint="RIGHT" x="0" y="1"/>
+              </Anchors>
+            </FontString>
+          </Layer>
+        </Layers>
+        <Scripts>
+          <OnClick>
+            MrTarget:SetOption('enemy', self:GetChecked());
+          </OnClick>
+        </Scripts>
+      </CheckButton>
+      <CheckButton name="$parentFriendly" inherits="OptionsBaseCheckButtonTemplate" parentKey="Friendly">
+        <Anchors>
+          <Anchor point="TOPLEFT" relativeTo="$parentEnemy" relativePoint="BOTTOMLEFT" x="0" y="6"/>
         </Anchors>
         <Layers>
           <Layer level="ARTWORK">
@@ -260,7 +279,7 @@
           <OnClick>
             MrTarget:SetOption('borderless', self:GetChecked());
             MrTarget:SetOption('icons', self:GetChecked());
-            MrTarget.options_frame.Icons:SetChecked(self:GetChecked());
+            <!-- self.parent.Icons:SetChecked(self:GetChecked()); -->
           </OnClick>
         </Scripts>
       </CheckButton>

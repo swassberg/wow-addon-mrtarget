@@ -1,6 +1,6 @@
 -- MrTargetUnit
 -- =====================================================================
--- Copyright (C) 2014 Lock of War, Developmental (Pty) Ltd
+-- Copyright (C) 2016 Lock of War, Renevatium
 --
 
 local POWER_BAR_COLORS = {
@@ -141,6 +141,7 @@ end
 function MrTargetUnit:SetAlpha(alpha)
   self:UnitHealthColor(alpha);
   self:UnitPowerColor(alpha);
+  self.frame.NAME:SetTextColor(1, 1, 1, alpha)
   self.frame.SPEC_ICON:SetAlpha(alpha);
   self.frame:SetAlpha(alpha);
 end
@@ -173,7 +174,7 @@ function MrTargetUnit:UnitCheck(unit)
 end
 
 function MrTargetUnit:UpdateTargeted(unit)
-  if MrTarget.OPTIONS.TARGETED then
+  if MrTarget:GetOption('TARGETED') then
     if self.update_targeted then
       self.targeted = 0;
       self.update_targeted = false;
@@ -243,7 +244,7 @@ function MrTargetUnit:UpdateDisplay()
     end
     self:SetAlpha(0.5);
     self:UnitLost();
-  elseif MrTarget.OPTIONS.RANGE and self.range == nil then
+  elseif MrTarget:GetOption('RANGE') and self.range == nil then
     self:SetAlpha(0.5);
   else
     self:SetAlpha(1);
@@ -284,8 +285,15 @@ function MrTargetUnit:UnregisterEvents()
 end
 
 function MrTargetUnit:SetFrameStyle()
-  if MrTarget.OPTIONS.BORDERLESS then self:SetStyleBorderless();
+  if MrTarget:GetOption('BORDERLESS') then self:SetStyleBorderless();
   else self:SetStyleDefault();
+  end
+end
+
+function MrTargetUnit:GetPosition()
+  for i=1, self.frame:GetNumPoints() do
+    local point, relativeTo, relativePoint, x, y = self.frame:GetPoint(i);
+    return { point, relativeTo, relativePoint, x, y };
   end
 end
 
@@ -295,7 +303,7 @@ function MrTargetUnit:SetStyleDefault()
   self.frame.TARGETED:SetFontObject("TextStatusBarTextRed");
   self.frame.HEALTH_BAR:ClearAllPoints();
   self.frame.HEALTH_BAR:SetPoint('TOPLEFT', self.frame, 'TOPLEFT', 1, -1);
-  if MrTarget.OPTIONS.POWER then
+  if MrTarget:GetOption('POWER') then
     self.frame.POWER_BAR:ClearAllPoints();
     self.frame.HEALTH_BAR:SetPoint('BOTTOMRIGHT', self.frame, 'BOTTOMRIGHT', -1, 10);
     self.frame.POWER_BAR:SetPoint('TOPLEFT', self.frame.HEALTH_BAR, 'BOTTOMLEFT', 0, -2);
@@ -322,7 +330,7 @@ function MrTargetUnit:SetStyleBorderless()
   self.frame.TARGETED:SetFontObject("TextStatusBarTextRedBorderless");
   self.frame.HEALTH_BAR:ClearAllPoints();
   self.frame.HEALTH_BAR:SetPoint('TOPLEFT', self.frame, 'TOPLEFT', 0, 0);
-  if MrTarget.OPTIONS.POWER then
+  if MrTarget:GetOption('POWER') then
     self.frame.POWER_BAR:ClearAllPoints();
     self.frame.HEALTH_BAR:SetPoint('BOTTOMRIGHT', self.frame, 'BOTTOMRIGHT', 0, 15);
     self.frame.POWER_BAR:SetPoint('TOPLEFT', self.frame.HEALTH_BAR, 'BOTTOMLEFT', 0, -1);
@@ -344,7 +352,7 @@ function MrTargetUnit:SetStyleBorderless()
   self.frame.ROLE_ICON:SetTexCoord(GetTexCoordsForRole(self.role, true));
   self.frame.ROLE_ICON:Show();
   self.frame.SPEC:Hide();
-  if MrTarget.OPTIONS.ICONS then
+  if MrTarget:GetOption('ICONS') then
     self.frame.SPEC_ICON:Show();
   else
     self.frame.SPEC_ICON:Hide();
