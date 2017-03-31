@@ -67,14 +67,14 @@ local function SortUnits(u,v)
   end
 end
 
-function MrTargetGroup:New(group, friendly, columns, max)
+function MrTargetGroup:New(group, friendly)
   local this = setmetatable({}, MrTargetGroup);
   this.units = setmetatable({}, nil);
   this.frames = setmetatable({}, nil);
   this.group = group;
   this.friendly = friendly;
-  this.columns = columns;
-  this.max = max;
+  this.columns = MrTarget:GetOption('COLUMNS');
+  this.max = MrTarget:GetSize();
   this.frame = CreateFrame('Frame', 'MrTargetGroup'..group, UIParent, 'MrTargetGroupTemplate');
   this.frame:SetScript('OnEvent', function(frame, ...) this:OnEvent(...); end);
   this.frame:SetScript('OnUpdate', function(frame, ...) this:OnUpdate(...); end);

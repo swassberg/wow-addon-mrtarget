@@ -1,4 +1,4 @@
--- MrTarget v5.0.0
+-- MrTarget v5.0.1
 -- =====================================================================
 -- This Work is provided under the Creative Commons
 -- Attribution-NonCommercial-NoDerivatives 4.0 International Public License
@@ -65,17 +65,18 @@ local ENEMIES = {
 };
 
 local BATTLEFIELDS = {
-  ['The Battle for Gilneas'] = { size=10 },
-  ['Silvershard Mines'] = { size=10 },
-  ['Warsong Gulch'] = { size=10 },
-  ['Twin Peaks'] = { size=10 },
-  ['Temple of Kotmogu'] = { size=10 },
-  ['Arathi Basin'] = { size=15 },
-  ['Strand of the Ancients'] = { size=15 },
-  ['Eye of the Storm'] = { size=15 },
-  ['Deepwind Gorge'] = { size=15 },
-  ['Alterac Valley'] = { size=40 },
-  ['Isle of Conquest'] = { size=40 }
+    [30] = { name='Alterac Valley', size=40 },
+   [489] = { name='Warsong Gulch', size=10 },
+   [529] = { name='Arathi Basin', size=15 },
+   [566] = { name='Eye of the Storm', size=15 },
+   [607] = { name='Strand of the Ancients', size=15 },
+   [628] = { name='Isle of Conquest', size=40 },
+   [726] = { name='Twin Peaks', size=10 },
+   [727] = { name='Silvershard Mines', size=10 },
+   [761] = { name='The Battle for Gilneas', size=10 },
+   [968] = { name='Eye of the Storm (Rated)', size=15 },
+   [998] = { name='Temple of Kotmogu', size=10 },
+  [1105] = { name='Deepwind Gorge', size=15 }
 };
 
 MrTarget = CreateFrame('Frame', 'MrTarget', UIParent);
@@ -83,7 +84,7 @@ MrTarget = CreateFrame('Frame', 'MrTarget', UIParent);
 function MrTarget:Load()
   self.loaded=true;
   self.active=false;
-  self.version='v5.0.0';
+  self.version='v5.0.1';
   self.difficulty = false;
   self.frames={};
   self.player={};
@@ -97,8 +98,12 @@ function MrTarget:Load()
 end
 
 function MrTarget:Initialize()
-  self.frames.HARMFUL = MrTargetGroup:New('HARMFUL', false, self.OPTIONS[self.size].COLUMNS, self.size);
-  self.frames.HELPFUL = MrTargetGroup:New('HELPFUL', true, self.OPTIONS[self.size].COLUMNS, self.size);
+  if not self.frames.HARMFUL then
+    self.frames.HARMFUL = MrTargetGroup:New('HARMFUL', false);
+  end
+  if not self.frames.HELPFUL then
+    self.frames.HELPFUL = MrTargetGroup:New('HELPFUL', true);
+  end
 end
 
 function MrTarget:Activate()
@@ -112,14 +117,14 @@ end
 
 function MrTarget:ZoneChanged()
   for i=1, GetMaxBattlefieldID() do
-    local name = select(1, GetInstanceInfo())
-    if BATTLEFIELDS[name] then
-      self.size = BATTLEFIELDS[name].size;
+    local mapId = select(8, GetInstanceInfo())
+    if BATTLEFIELDS[mapId] then
+      self.size = IsRatedBattleground() and 10 or BATTLEFIELDS[mapId].size;
       if self:GetOption('enabled') and not self.active then
         self.active = true;
         self:DisableOptions();
         self:ObjectivesFrame(true);
-        self:UpdateOptions(self.size);
+        self:UpdateOptions();
         return self:Activate();
       else
         return;
@@ -159,9 +164,13 @@ function MrTarget:HelloWorld()
   ChatFrame1:AddMessage(message, 0, 0, 0, GetChatTypeIndex('SYSTEM'));
 end
 
+function MrTarget:GetSize()
+  return self.size;
+end
+
 function MrTarget:GetOptions()
-  self.OPTIONS = MRTARGET_SETTINGS or MRTARGET_OPTIONS or nil;
-  if not self.OPTIONS or not self.OPTIONS[10] then
+  self.OPTIONS = MRTARGET_SETTINGS;
+  if not self.OPTIONS or not self.OPTIONS[40] then
     self.OPTIONS = copy(DEFAULT_OPTIONS);
   end
 end
@@ -220,14 +229,17 @@ function MrTarget:SetOptions(options)
     self.options_frame.tabs[v].Columns:SetValue(options[v].COLUMNS);
     self:InitNamingOptions(options[v].NAMING);
   end
+  if self.size then
+    self:SetOption('position', options[self.size].POSITION);
+  end
 end
 
-function MrTarget:UpdateOptions(max)
-  self:SetOptionSize(self.OPTIONS[max].SIZE);
-  self:SetOptionPosition(self.OPTIONS[max].POSITION);
-  self:SetOptionColumns(self.OPTIONS[max].COLUMNS);
-  self.frames.HARMFUL:SetMax(max);
-  self.frames.HELPFUL:SetMax(max);
+function MrTarget:UpdateOptions()
+  self:SetOptionSize(self:GetOption('SIZE'));
+  self:SetOptionPosition(self:GetOption('POSITION'));
+  self:SetOptionColumns(self:GetOption('COLUMNS'));
+  self.frames.HARMFUL:SetMax(self.size);
+  self.frames.HELPFUL:SetMax(self.size);
 end
 
 function MrTarget:SaveOptions()
@@ -247,8 +259,14 @@ function MrTarget:SaveOptions()
   end
 end
 
-function MrTarget:CancelOptions() self:SetOptions(self.OPTIONS); end
-function MrTarget:DefaultOptions() self:SetOptions(DEFAULT_OPTIONS); end
+function MrTarget:CancelOptions()
+  self:SetOptions(self.OPTIONS);
+end
+
+function MrTarget:DefaultOptions()
+  self:SetOptions(DEFAULT_OPTIONS);
+  self:OpenOptions(self.size);
+end
 
 function MrTarget:DisableOptions()
   for k,v in pairs(BATTLEFIELD_SIZES) do
@@ -292,7 +310,6 @@ function MrTarget:SetOption(option, value)
 end
 
 function MrTarget:SetOptionColumns(columns)
-   self.OPTIONS[self.size]['COLUMNS'] = columns;
   if self.frames.HELPFUL then
     self.frames.HELPFUL:SetColumns(columns);
   end
@@ -318,7 +335,7 @@ end
 function MrTarget:SetOptionPositionHARMFUL(position)
   self.frames.HARMFUL.frame:ClearAllPoints();
   local ok, point, relativeTo, relativePoint, x, y = pcall(unpack, position);
-  if not ok then point, relativeTo, relativePoint, x, y = unpack(DEFAULT_OPTIONS.POSITION.HARMFUL);
+  if not ok then point, relativeTo, relativePoint, x, y = unpack(DEFAULT_BATTLEFIELD_OPTIONS.POSITION.HARMFUL);
   end
   self.frames.HARMFUL.frame:SetPoint(point, relativeTo, relativePoint, x, y);
   self.frames.HARMFUL:UpdateOrientation();
@@ -327,10 +344,10 @@ end
 function MrTarget:SetOptionPositionHELPFUL(position)
   self.frames.HELPFUL.frame:ClearAllPoints();
   local ok, point, relativeTo, relativePoint, x, y = pcall(unpack, position);
-  if not ok then point, relativeTo, relativePoint, x, y = unpack(DEFAULT_OPTIONS.POSITION.HELPFUL);
+  if not ok then point, relativeTo, relativePoint, x, y = unpack(DEFAULT_BATTLEFIELD_OPTIONS.POSITION.HELPFUL);
   end
   self.frames.HELPFUL.frame:SetPoint(point, relativeTo, relativePoint, x, y);
-  self.frames.HARMFUL:UpdateOrientation();
+  self.frames.HELPFUL:UpdateOrientation();
 end
 
 function MrTarget:SetOptionSize(size)
@@ -344,28 +361,28 @@ end
 
 function MrTarget:OpenOptions(size)
   if not self.active then
-    self:CloseOptions();
     self.size = size;
-    self.options_open = true;
+    self:CloseOptions();
     self:Initialize();
-    if self.OPTIONS[size].ENABLED then
+    self.options_open = true;
+    if self:GetOption('ENABLED') then
       self:ObjectivesFrame(true);
-      if self.OPTIONS[size].ENEMY then
+      if self:GetOption('ENEMY') then
          self.frames.HARMFUL:CreateStub(ENEMIES, size);
       else
         self.frames.HARMFUL:Destroy();
       end
-      if self.OPTIONS[size].FRIENDLY then
+      if self:GetOption('FRIENDLY') then
         self.frames.HELPFUL:CreateStub(FRIENDS, size);
       else
         self.frames.HELPFUL:Destroy();
       end
-      if self.OPTIONS[size].BORDERLESS then
+      if self:GetOption('BORDERLESS') then
         self.options_frame.tabs[size].Icons:Show();
       else
         self.options_frame.tabs[size].Icons:Hide();
       end
-      self:UpdateOptions(self.size);
+      self:UpdateOptions();
     else
       self:Destroy();
     end

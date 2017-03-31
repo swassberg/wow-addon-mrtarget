@@ -111,11 +111,18 @@ end
 --     if UnitIsEnemy('player', sourceName) then
 --       print('Enemy in range '..sourceName);
 --       self.range = self:GetHarmfulRange();
+--       return;
+--     else
+--       return;
 --     end
---   elseif destName and self.parent.name == destName then
+--   end
+--   if destName and self.parent.name == destName then
 --     if UnitIsEnemy('player', destName) then
 --       print('Enemy in range '..destName);
 --       self.range = self:GetHarmfulRange();
+--       return;
+--     else
+--       return;
 --     end
 --   end
 -- end

@@ -1,9 +1,15 @@
-MrTarget v5.0.0
+MrTarget v5.0.1
 =====================================================================
 Copyright (C) 2016 Lock of War, Renevatium
 
 Warlords of Draenor v7.1.0
 ---------------------------------------------------------------------
+05/11/2016
+v5.0.1
+Fixes to interfaces options
+Use map ID to identify battlegrounds
+Use 10man config for RBG
+
 26/10/2016
 v5.0.0
 Updated to support patch 7.1.0 (70100)
