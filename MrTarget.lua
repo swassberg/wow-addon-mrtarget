@@ -1,4 +1,4 @@
--- MrTarget v4.1.0
+-- MrTarget v5.0.0
 -- =====================================================================
 -- This Work is provided under the Creative Commons
 -- Attribution-NonCommercial-NoDerivatives 4.0 International Public License
@@ -83,12 +83,13 @@ MrTarget = CreateFrame('Frame', 'MrTarget', UIParent);
 function MrTarget:Load()
   self.loaded=true;
   self.active=false;
-  self.version='v4.1.0';
+  self.version='v5.0.0';
   self.difficulty = false;
   self.frames={};
   self.player={};
   self.size=40;
   self.objectives=false;
+  self.options_open=false;
   self:HelloWorld();
   self:GetOptions();
   self:Initialize();
@@ -101,37 +102,35 @@ function MrTarget:Initialize()
 end
 
 function MrTarget:Activate()
-  if self.OPTIONS.ENEMY then
+  if self:GetOption('ENEMY') then
     self.frames.HARMFUL:Activate();
   end
-  if self.OPTIONS.FRIENDLY then
+  if self:GetOption('FRIENDLY') then
     self.frames.HELPFUL:Activate();
   end
 end
 
 function MrTarget:ZoneChanged()
-  local active, battlefield = IsInInstance();
-  if self.OPTIONS.ENABLED and not self.active and battlefield == 'pvp' then
-    for i=1, GetMaxBattlefieldID() do
-      local status, name, size = GetBattlefieldStatus(i);
-      if status == 'active' then
-        if BATTLEFIELDS[name] then
-          self.size = BATTLEFIELDS.size;
-          self.active = active;
-          self:DisableOptions();
-          self:ObjectivesFrame(active);
-          self:UpdateOptions();
-          self:Activate();
-        end
+  for i=1, GetMaxBattlefieldID() do
+    local name = select(1, GetInstanceInfo())
+    if BATTLEFIELDS[name] then
+      self.size = BATTLEFIELDS[name].size;
+      if self:GetOption('enabled') and not self.active then
+        self.active = true;
+        self:DisableOptions();
+        self:ObjectivesFrame(true);
+        self:UpdateOptions(self.size);
+        return self:Activate();
+      else
+        return;
       end
     end
-  elseif not active then
-    if self.options_frame and not self.options_frame:IsVisible() then
-      self.active = active;
-      self:EnableOptions();
-      self:ObjectivesFrame(active);
-      self:Destroy();
-    end
+  end
+  if not self.options_open then
+    self.active = false;
+    self:EnableOptions();
+    self:ObjectivesFrame(false);
+    self:Destroy();
   end
 end
 
@@ -227,6 +226,8 @@ function MrTarget:UpdateOptions(max)
   self:SetOptionSize(self.OPTIONS[max].SIZE);
   self:SetOptionPosition(self.OPTIONS[max].POSITION);
   self:SetOptionColumns(self.OPTIONS[max].COLUMNS);
+  self.frames.HARMFUL:SetMax(max);
+  self.frames.HELPFUL:SetMax(max);
 end
 
 function MrTarget:SaveOptions()
@@ -284,13 +285,14 @@ end
 function MrTarget:SetOption(option, value)
   if self.size then
     self.OPTIONS[self.size][string.upper(option)] = value;
-    if self.options_frame.tabs[self.size]:IsVisible() then
+    if self.options_frame.tabs[self.size] and self.options_frame.tabs[self.size]:IsVisible() then
       self:OpenOptions(self.size);
     end
   end
 end
 
 function MrTarget:SetOptionColumns(columns)
+   self.OPTIONS[self.size]['COLUMNS'] = columns;
   if self.frames.HELPFUL then
     self.frames.HELPFUL:SetColumns(columns);
   end
@@ -344,6 +346,7 @@ function MrTarget:OpenOptions(size)
   if not self.active then
     self:CloseOptions();
     self.size = size;
+    self.options_open = true;
     self:Initialize();
     if self.OPTIONS[size].ENABLED then
       self:ObjectivesFrame(true);
@@ -373,6 +376,7 @@ function MrTarget:CloseOptions()
   if not self.active then
     self:ObjectivesFrame(false);
     self.options_frame:Hide();
+    self.options_open = false;
     self:Destroy();
   end
 end

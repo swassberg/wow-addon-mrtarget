@@ -180,6 +180,10 @@ function MrTargetGroup:UnitTarget(unit)
   end
 end
 
+function MrTargetGroup:SetMax(max)
+  self.max = max;
+end
+
 function MrTargetGroup:GetMax()
   for k,v in pairs({ 10, 15, 40 }) do
     if #self.units <= v then
@@ -324,8 +328,8 @@ function MrTargetGroup:OnUpdate(time)
     self:UpdateLayout();
     self.update_units = false;
   end
-  self:SetTarget(self.frames[1]);
-  self:SetAssist(self.frames[1]);
+  -- self:SetTarget(self.frames[1]);
+  -- self:SetAssist(self.frames[1]);
   self.update = 0;
 end
 

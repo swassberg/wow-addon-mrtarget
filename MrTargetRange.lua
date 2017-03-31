@@ -24,6 +24,7 @@ function MrTargetRange:New(parent)
   this.frame:SetScript('OnUpdate', function(frame, time) this:OnUpdate(time); end);
   this.frame:SetScript('OnEvent', function(frame, ...) this:OnEvent(...); end);
   this.frame:RegisterEvent('ACTIVE_TALENT_GROUP_CHANGED');
+  -- this.frame:RegisterEvent('COMBAT_LOG_EVENT_UNFILTERED');
   this:UpdateSpells();
   this.frame:Show();
   return this;
@@ -105,8 +106,25 @@ function MrTargetRange:OnUpdate(time)
   end
 end
 
-function MrTargetRange:OnEvent(event, unit)
+-- function MrTargetRange:CombatLogRangeCheck(sourceName, destName, spellId)
+--   if sourceName and self.parent.name == sourceName then
+--     if UnitIsEnemy('player', sourceName) then
+--       print('Enemy in range '..sourceName);
+--       self.range = self:GetHarmfulRange();
+--     end
+--   elseif destName and self.parent.name == destName then
+--     if UnitIsEnemy('player', destName) then
+--       print('Enemy in range '..destName);
+--       self.range = self:GetHarmfulRange();
+--     end
+--   end
+-- end
+
+function MrTargetRange:OnEvent(event, unit, ...)
   if event == 'ACTIVE_TALENT_GROUP_CHANGED' then
     self:UpdateSpells();
+  -- elseif event == 'COMBAT_LOG_EVENT_UNFILTERED' then
+  --   local _, _, _, sourceName, _, _, _, destName, _, _, spellId = ...;
+  --   self:CombatLogRangeCheck(sourceName, destName, spellId);
   end
 end
