@@ -8,7 +8,7 @@ MrTargetRange = {
   parent=nil,
   range=nil,
   update=0,
-  frequency=0.2,
+  frequency=0.25,
   harmful={},
   helpful={}
 };
@@ -90,6 +90,12 @@ function MrTargetRange:GetHelpfulRange()
 end
 
 function MrTargetRange:OnUpdate(time)
+  if UnitIsDeadOrGhost('player') then
+    self.parent.range = nil;
+    self.range = nil;
+    self.update = 0;
+    return;
+  end
   self.update = self.update + time;
   if self.update > self.frequency then
     if self.parent:GetUnit(self.parent.unit) then

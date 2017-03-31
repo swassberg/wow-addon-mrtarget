@@ -1,4 +1,4 @@
--- MrTarget v5.0.1
+-- MrTarget v5.1.0
 -- =====================================================================
 -- This Work is provided under the Creative Commons
 -- Attribution-NonCommercial-NoDerivatives 4.0 International Public License
@@ -64,6 +64,15 @@ local ENEMIES = {
   'Демьяна', 'Дамнейшен', 'Золмар', 'Атейн', 'Келаний', 'Дамнейшн', 'Погода', 'Шадоудва'
 };
 
+-- 2597  Alterac Valley
+-- 3358  Arathi Basin
+-- 3820  Eye of the Storm
+-- 4710  Isle of Conquest
+-- 4384  Strand of the Ancients
+-- 5449  The Battle for Gilneas
+-- 5031  Twin Peaks
+-- 3277  Warsong Gulch
+
 local BATTLEFIELDS = {
     [30] = { name='Alterac Valley', size=40 },
    [489] = { name='Warsong Gulch', size=10 },
@@ -74,7 +83,7 @@ local BATTLEFIELDS = {
    [726] = { name='Twin Peaks', size=10 },
    [727] = { name='Silvershard Mines', size=10 },
    [761] = { name='The Battle for Gilneas', size=10 },
-   [968] = { name='Eye of the Storm (Rated)', size=15 },
+   [968] = { name='Eye of the Storm (RBG)', size=10 },
    [998] = { name='Temple of Kotmogu', size=10 },
   [1105] = { name='Deepwind Gorge', size=15 }
 };
@@ -84,7 +93,7 @@ MrTarget = CreateFrame('Frame', 'MrTarget', UIParent);
 function MrTarget:Load()
   self.loaded=true;
   self.active=false;
-  self.version='v5.0.1';
+  self.version='v5.1.0';
   self.difficulty = false;
   self.frames={};
   self.player={};
