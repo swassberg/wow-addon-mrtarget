@@ -147,3 +147,32 @@ function MrTargetAuras:OnUpdate(frame)
     end
   end
 end
+
+-- local defaultcdtime = 6
+-- local channel = "RAID_WARNING"
+
+-- local frame = CreateFrame("frame", nil)
+-- SlashCmdList['COUNTDOWN'] = function(newtime)
+--     if newtime ~= "" then
+--         cdtime = newtime+1
+--     else
+--         cdtime = defaultcdtime+1
+--     end
+--     local ending = false
+--     local start = floor(GetTime())
+--     local throttle = cdtime
+--     frame:SetScript("OnUpdate", function()
+--         if ending == true then return end
+--         local countdown = (start - floor(GetTime()) + cdtime)
+--         if (countdown + 1) == throttle and countdown >= 0 then
+--             if countdown == 0 then
+--                 SendChatMessage('Pulling', channel)
+--                 throttle = countdown
+--                 ending = true
+--             else
+--                 SendChatMessage(countdown, channel)
+--                 throttle = countdown
+--             end
+--         end
+--     end)
+-- end
