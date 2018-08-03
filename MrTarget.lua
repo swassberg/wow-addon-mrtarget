@@ -1,4 +1,4 @@
--- MrTarget v5.1.1
+-- MrTarget v5.1.2
 -- =====================================================================
 -- This Work is provided under the Creative Commons
 -- Attribution-NonCommercial-NoDerivatives 4.0 International Public License
@@ -64,15 +64,6 @@ local ENEMIES = {
   'Демьяна', 'Дамнейшен', 'Золмар', 'Атейн', 'Келаний', 'Дамнейшн', 'Погода', 'Шадоудва'
 };
 
--- 2597  Alterac Valley
--- 3358  Arathi Basin
--- 3820  Eye of the Storm
--- 4710  Isle of Conquest
--- 4384  Strand of the Ancients
--- 5449  The Battle for Gilneas
--- 5031  Twin Peaks
--- 3277  Warsong Gulch
-
 local BATTLEFIELDS = {
     [30] = { name='Alterac Valley', size=40 },
    [489] = { name='Warsong Gulch', size=10 },
@@ -85,7 +76,8 @@ local BATTLEFIELDS = {
    [761] = { name='The Battle for Gilneas', size=10 },
    [968] = { name='Eye of the Storm (RBG)', size=10 },
    [998] = { name='Temple of Kotmogu', size=10 },
-  [1105] = { name='Deepwind Gorge', size=15 }
+  [1105] = { name='Deepwind Gorge', size=15 },
+  [1681] = { name='Arathi Blizzard', size=15 }
 };
 
 MrTarget = CreateFrame('Frame', 'MrTarget', UIParent);
@@ -93,13 +85,16 @@ MrTarget = CreateFrame('Frame', 'MrTarget', UIParent);
 function MrTarget:Load()
   self.loaded=true;
   self.active=false;
-  self.version='v5.1.1';
+  self.version='v5.1.2';
   self.difficulty = false;
   self.frames={};
-  self.player={};
   self.size=40;
   self.objectives=false;
   self.options_open=false;
+  self.player={
+    helpful=setmetatable({}, nil),
+    harmful=setmetatable({}, nil)
+  };
   self:HelloWorld();
   self:GetOptions();
   self:Initialize();
@@ -125,19 +120,17 @@ function MrTarget:Activate()
 end
 
 function MrTarget:ZoneChanged()
-  for i=1, GetMaxBattlefieldID() do
-    local mapId = select(8, GetInstanceInfo())
-    if BATTLEFIELDS[mapId] then
-      self.size = IsRatedBattleground() and 10 or BATTLEFIELDS[mapId].size;
-      if self:GetOption('enabled') and not self.active then
-        self.active = true;
-        self:DisableOptions();
-        self:ObjectivesFrame(true);
-        self:UpdateOptions();
-        return self:Activate();
-      else
-        return;
-      end
+  local mapId = select(8, GetInstanceInfo())
+  if BATTLEFIELDS[mapId] then
+    self.size = IsRatedBattleground() and 10 or BATTLEFIELDS[mapId].size;
+    if self:GetOption('enabled') and not self.active then
+      self.active = true;
+      self:DisableOptions();
+      self:ObjectivesFrame(true);
+      self:UpdateOptions();
+      return self:Activate();
+    else
+      return;
     end
   end
   if not self.options_open then
@@ -160,11 +153,45 @@ function MrTarget:ObjectivesFrame(active)
   end
 end
 
+local function SortByRange(u,v)
+  if v and u then
+    if u.range > v.range then
+      return true;
+    end
+  elseif u then
+    return true;
+  end
+end
+
+function MrTarget:UpdateSpells()
+  self.player.harmful = table.wipe(self.player.harmful);
+  self.player.helpful = table.wipe(self.player.helpful);
+  local numTabs = GetNumSpellTabs();
+  for i=1,numTabs do
+    local name,texture,offset,numSpells = GetSpellTabInfo(i);
+    for j=1,numSpells do
+      local id = j+offset;
+      local name, rank = GetSpellBookItemName(id, 'spell');
+      local range = select(6, GetSpellInfo(name));
+      if range then
+        if IsHarmfulSpell(id, 'spell') then
+          table.insert(self.player.harmful, { name=name, range=range });
+        elseif IsHelpfulSpell(id, 'spell') then
+          table.insert(self.player.helpful, { name=name, range=range });
+        end
+      end
+    end
+  end
+  table.sort(self.player.harmful, SortByRange);
+  table.sort(self.player.helpful, SortByRange);
+end
+
 function MrTarget:PlayerLogin()
   if self.loaded then
     self.player.NAME = UnitName('player');
     self.player.CLASS = select(2, UnitClass('player'));
     self.player.FACTION = GetBattlefieldArenaFaction();
+    self:UpdateSpells();
   end
 end
 
@@ -426,6 +453,8 @@ function MrTarget:OnEvent(event, ...)
   elseif event == 'ZONE_CHANGED' then self:ZoneChanged();
   elseif event == 'ZONE_CHANGED_NEW_AREA' then self:ZoneChanged();
   elseif event == 'ZONE_CHANGED_INDOORS' then self:ZoneChanged();
+  elseif event == 'ACTIVE_TALENT_GROUP_CHANGED' then
+    self:UpdateSpells();
   end
 end
 

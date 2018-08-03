@@ -1,9 +1,14 @@
-MrTarget v5.1.1
+MrTarget v5.1.2
 =====================================================================
 Copyright (C) 2016 Lock of War, Renevatium
 
 Legion v7.2.0
 ---------------------------------------------------------------------
+05/04/2017
+v5.1.2
+Added support for Brawl: Arathi Blizzard
+Range now tracks combat log events
+
 30/03/2017
 v5.1.1
 Updated to support patch 7.2.0 (70200)

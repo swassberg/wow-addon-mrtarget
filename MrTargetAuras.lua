@@ -3,16 +3,32 @@
 -- Copyright (C) 2016 Lock of War, Renevatium
 --
 
-local PVP_AURAS = {};
-local PVP_AURAS_TEMP = {
+local AURAS = {};
+local AURAS_TEMP = {
   23333,23335,34976,46393,46392,141210,140876,156618,156621,121164,
   121175,121176,121177,125344,125345,125346,125347
 };
 
-for i=1, #PVP_AURAS_TEMP do
-  local name, _, icon = GetSpellInfo(PVP_AURAS_TEMP[i]);
+for i=1, #AURAS_TEMP do
+  local name, _, icon = GetSpellInfo(AURAS_TEMP[i]);
   if name then
-    PVP_AURAS[i] = name;
+    AURAS[i] = name;
+  end
+end
+
+
+
+local COOLDOWNS = {};
+local COOLDOWNS_TEMP = {
+  42292, -- PVP Trinket
+  59752, -- Every Man for Himself
+  208683 -- Gladiators Medallion
+};
+
+for i=1, #COOLDOWNS_TEMP do
+  local name, _, icon = GetSpellInfo(COOLDOWNS_TEMP[i]);
+  if name then
+    COOLDOWNS[i] = name;
   end
 end
 
@@ -70,7 +86,8 @@ end
 function MrTargetAuras:UnitAura(unit)
   if MrTarget:GetOption('AURAS') then
     self.auras = table.wipe(self.auras);
-    self.count = self:UpdateCarriers(1, unit);
+    self.count = self:UpdateCooldowns(1, unit);
+    self.count = self:UpdateCarriers(self.count, unit);
     self.count = self:UpdateDebuff(self.count, unit);
     for i=self.count,self.max do
       self:UnsetAura(self.frames[i]);
@@ -78,10 +95,21 @@ function MrTargetAuras:UnitAura(unit)
   end
 end
 
-function MrTargetAuras:UpdateCarriers(count, unit)
-  for i=1,#PVP_AURAS do
+function MrTargetAuras:UpdateCooldowns(count, unit)
+  for i=1,#COOLDOWNS do
     if count > self.max then break; end
-    local name, rank, icon, stack, type, duration, expires, source, _, _, id = UnitAura(unit, PVP_AURAS[i]);
+    local name, rank, icon, stack, type, duration, expires, source, _, _, id = UnitAura(unit, COOLDOWNS[i]);
+    if name and icon then
+      local cooldown = GetSpellCooldown(id)
+    end
+  end
+  return count;
+end
+
+function MrTargetAuras:UpdateCarriers(count, unit)
+  for i=1,#AURAS do
+    if count > self.max then break; end
+    local name, rank, icon, stack, type, duration, expires, source, _, _, id = UnitAura(unit, AURAS[i]);
     if name and icon then
       count = count+self:SetAura(count, self.frames[count], id, name, duration, expires, icon);
     end
@@ -89,10 +117,29 @@ function MrTargetAuras:UpdateCarriers(count, unit)
   return count;
 end
 
+function MrTargetAuras:UpdateAuras(count, unit)
+  if self.parent.parent.friendly then
+    return self:UpdateBuff(self.count, unit);
+  else
+    return self:UpdateDebuff(self.count, unit);
+  end
+end
+
 function MrTargetAuras:UpdateDebuff(count, unit)
   for i=1,40 do
     if count > self.max then break; end
     local name, rank, icon, stack, type, duration, expires, source, _, _, id = UnitDebuff(unit, i, 'PLAYER');
+    if name and icon then
+      count = count+self:SetAura(count, self.frames[count], id, name, duration, expires, icon);
+    end
+  end
+  return count;
+end
+
+function MrTargetAuras:UpdateBuff(count, unit)
+  for i=1,40 do
+    if count > self.max then break; end
+    local name, rank, icon, stack, type, duration, expires, source, _, _, id = UnitBuff(unit, i, 'PLAYER');
     if name and icon then
       count = count+self:SetAura(count, self.frames[count], id, name, duration, expires, icon);
     end
@@ -147,6 +194,8 @@ function MrTargetAuras:OnUpdate(frame)
     end
   end
 end
+
+
 
 -- local defaultcdtime = 6
 -- local channel = "RAID_WARNING"
