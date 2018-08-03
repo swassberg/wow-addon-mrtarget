@@ -244,7 +244,6 @@ function MrTargetGroup:UpdateBattlefieldScore()
       for i=1,#self.units do
         self.units[i].display = self:GetDisplayName(self.units[i].name);
       end
-      collectgarbage('collect');
       self.update_units = true;
     end
   end
@@ -324,6 +323,9 @@ function MrTargetGroup:OnUpdate(time)
   self.update = self.update + time;
   if self.update < self.tick or (WorldStateScoreFrame and WorldStateScoreFrame:IsShown()) then
     return;
+  end
+  if GetAddOnMemoryUsage("MrTarget") > MrTarget:GetSize()*80 then
+    collectgarbage('collect');
   end
   if self.update_units and not InCombatLockdown() and #self.units > 0 then
     for i=1, #self.frames do

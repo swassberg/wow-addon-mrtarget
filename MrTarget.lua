@@ -1,4 +1,4 @@
--- MrTarget v5.2.4
+-- MrTarget v5.3.0
 -- =====================================================================
 -- This Work is provided under the Creative Commons
 -- Attribution-NonCommercial-NoDerivatives 4.0 International Public License
@@ -28,34 +28,6 @@ local DEFAULT_BATTLEFIELD_OPTIONS = {
   AURAS=true,
   COLUMNS=1
 };
-
-local function count_all(f)
-  local seen = {}
-  local count_table
-  count_table = function(t)
-    if seen[t] then return end
-    f(t)
-    seen[t] = true
-    for k,v in pairs(t) do
-      if type(v) == "table" then
-        count_table(v)
-      elseif type(v) == "userdata" then
-        f(v)
-      end
-    end
-  end
-  count_table(_G)
-end
-
-local function type_count()
-  local counts = {}
-  local enumerate = function (o)
-    local t = type_name(o)
-    counts[t] = (counts[t] or 0) + 1
-  end
-  count_all(enumerate)
-  return counts
-end
 
 function mrtarget_copy(obj, seen)
   if type(obj) ~= 'table' then return obj end
@@ -113,6 +85,7 @@ local BATTLEFIELDS = {
    [968] = { name='Eye of the Storm (RBG)', size=10 },
    [998] = { name='Temple of Kotmogu', size=10 },
   [1105] = { name='Deepwind Gorge', size=15 },
+  [1280] = { name='South Shore vs Tauren Mill', size=40 },
   [1681] = { name='Arathi Blizzard', size=15 }
 };
 
@@ -121,7 +94,7 @@ MrTarget = CreateFrame('Frame', 'MrTarget', UIParent);
 function MrTarget:Load()
   self.loaded=true;
   self.active=false;
-  self.version='v5.2.4';
+  self.version='v5.3.0';
   self.difficulty = false;
   self.frames={};
   self.size=40;

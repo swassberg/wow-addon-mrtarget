@@ -130,8 +130,10 @@ end
 
 function MrTargetUnit:UnitHealthColor(alpha)
   local color = RAID_CLASS_COLORS[self.class];
-  self.frame.HEALTH_BAR:SetStatusBarColor(color.r, color.g, color.b, alpha);
-  self.frame.HEALTH_BAR.r, self.frame.HEALTH_BAR.g, self.frame.HEALTH_BAR.b, self.frame.HEALTH_BAR.alpha = color.r, color.g, color.b, alpha;
+  if color then
+    self.frame.HEALTH_BAR:SetStatusBarColor(color.r, color.g, color.b, alpha);
+    self.frame.HEALTH_BAR.r, self.frame.HEALTH_BAR.g, self.frame.HEALTH_BAR.b, self.frame.HEALTH_BAR.alpha = color.r, color.g, color.b, alpha;
+  end
 end
 
 function MrTargetUnit:UnitPowerColor(alpha)
@@ -284,6 +286,13 @@ function MrTargetUnit:OnEvent(event, unit, ...)
   elseif event == 'UNIT_COMBAT' then self:UnitCheck(unit);
   elseif event == 'UNIT_TARGET' then self:UnitCheck(unit);
   elseif event == 'UPDATE_MOUSEOVER_UNIT' then self:UnitCheck('mouseover');
+  elseif event == 'UNIT_AURA' then
+    -- for i=1,40 do
+    --   local name, rank, icon, stack, type, duration, expires, source, _, _, id = UnitBuff(unit, i);
+    --   if name then
+    --     print(name, id)
+    --   end
+    -- end
   elseif event == 'PLAYER_REGEN_ENABLED' then
     self:PlayerRegenEnabled();
   end
@@ -294,6 +303,7 @@ function MrTargetUnit:RegisterEvents()
   self.frame:RegisterEvent('UPDATE_MOUSEOVER_UNIT');
   self.frame:RegisterEvent('UNIT_COMBAT');
   self.frame:RegisterEvent('UNIT_TARGET');
+  -- self.frame:RegisterEvent('UNIT_AURA');
 end
 
 function MrTargetUnit:UnregisterEvents()
@@ -301,6 +311,7 @@ function MrTargetUnit:UnregisterEvents()
   self.frame:UnregisterEvent('UPDATE_MOUSEOVER_UNIT');
   self.frame:UnregisterEvent('UNIT_COMBAT');
   self.frame:UnregisterEvent('UNIT_TARGET');
+  -- self.frame:UnregisterEvent('UNIT_AURA');
 end
 
 function MrTargetUnit:SetFrameStyle()

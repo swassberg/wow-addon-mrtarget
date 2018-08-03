@@ -19,18 +19,28 @@ for i=1, #COOLDOWNS_TEMP do
   end
 end
 
-local AURAS = {};
-local AURAS_TEMP = {
-  23333,23335,34976,46393,46392,141210,140876,156618,156621,121164,
-  121175,121176,121177,125344,125345,125346,125347
+local AURAS = {
+   [23333] = { name="Horde Flag", icon='Interface\\Icons\\INV_BannerPVP_01' },
+   [23335] = { name="Alliance Flag", icon='Interface\\Icons\\INV_BannerPVP_02' },
+   [34976] = { name="Netherstorm Flag", icon='Interface\\Icons\\INV_BannerPVP_03' },
+   [46393] = { name='Brutal Assualt', icon='Interface\\Icons\\Spell_Misc_WarsongFocus' },
+   [46392] = { name='Focused Assualt', icon='Interface\\Icons\\Spell_Misc_WarsongBrutal' },
+  [100196] = { name="Netherstorm Flag", icon='Interface\\Icons\\INV_BannerPVP_03' },
+  [156618] = { name="Horde Flag", icon='Interface\\Icons\\INV_BannerPVP_01' },
+  [156621] = { name="Alliance Flag", icon='Interface\\Icons\\INV_BannerPVP_02' },
+  [140876] = { name="Alliance Mine Cart", icon='Interface\\Minimap\\Vehicle-SilvershardMines-MineCartBlue' },
+  [141210] = { name="Horde Mine Cart", icon='Interface\\Minimap\\Vehicle-SilvershardMines-MineCartRed' },
+  [121164] = { name="Orb of Power", icon='Interface\\MiniMap\\TempleofKotmogu_ball_cyan' }, -- Blue Orb
+  [121175] = { name="Orb of Power", icon='Interface\\MiniMap\\TempleofKotmogu_ball_purple' }, -- Purple Orb
+  [121176] = { name="Orb of Power", icon='Interface\\MiniMap\\TempleofKotmogu_ball_green' }, -- Green Orb
+  [121177] = { name="Orb of Power", icon='Interface\\MiniMap\\TempleofKotmogu_ball_orange' }, -- Orange Orb
+  [125344] = { name="Orb of Power", icon='Interface\\MiniMap\\TempleofKotmogu_ball_cyan' }, -- Blue Orb
+  [125345] = { name="Orb of Power", icon='Interface\\MiniMap\\TempleofKotmogu_ball_purple' }, -- Purple Orb
+  [125346] = { name="Orb of Power", icon='Interface\\MiniMap\\TempleofKotmogu_ball_green' }, -- Green Orb
+  [125347] = { name="Orb of Power", icon='Interface\\MiniMap\\TempleofKotmogu_ball_orange' }, -- Orange Orb
+  [112055] = { name="Orb of Power", icon='Interface\\Icons\\INV_BannerPVP_03' }, -- Orb of Power
+  [127959] = { name="Orb of Power", icon='Interface\\Icons\\INV_BannerPVP_03' } -- Orb of Power
 };
-
-for i=1, #AURAS_TEMP do
-  local name, _, icon = GetSpellInfo(AURAS_TEMP[i]);
-  if name then
-    AURAS[i] = name;
-  end
-end
 
 MrTargetAuras = {
   parent=nil,
@@ -125,13 +135,13 @@ function MrTargetAuras:UnitAura(unit)
 end
 
 function MrTargetAuras:UpdateCarriers(count, unit)
-  for i=1,#AURAS do
+  for k, v in pairs(AURAS) do
     if count > self.max then break; end
-    local name, rank, icon, stack, type, duration, expires, source, _, _, id = UnitAura(unit, AURAS[i]);
-    if name and icon then
-      count = count+self:SetAura(count, id, name, duration, expires, icon, false);
+    local name, rank, _, stack, type, duration, expires, source, _, _, id = UnitAura(unit, AURAS[k].name);
+    if name then
+      count = count+self:SetAura(count, id, name, duration, expires, AURAS[k].icon, false);
     else
-      id = select(7, GetSpellInfo(AURAS[i]));
+      id = select(7, GetSpellInfo(AURAS[k].name));
       if self.auras[id] then
         self:UnsetAura(self.frames[self.auras[id]]);
       end

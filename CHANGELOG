@@ -1,9 +1,14 @@
-MrTarget v5.2.4
+MrTarget v5.3.0
 =====================================================================
 Copyright (C) Lock of War, Renevatium
 
 Legion v7.2.0
 ---------------------------------------------------------------------
+02/06/2017
+v5.3.0
+Garbage collection now conditional and dynamic
+Fixed carrier display auras
+
 30/05/2017
 v5.2.4
 Clear auras properly on death
