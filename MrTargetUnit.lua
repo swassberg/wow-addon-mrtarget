@@ -71,6 +71,9 @@ function MrTargetUnit:New(parent, count)
 end
 
 function MrTargetUnit:SetUnit(unit, name, display, class, spec, role, icon, test)
+  if self.name ~= name then
+    self.auras:Destroy();
+  end
   self.unit = unit;
   self.frame.unit = unit;
   self.name = name;
@@ -80,6 +83,7 @@ function MrTargetUnit:SetUnit(unit, name, display, class, spec, role, icon, test
   self.role = role;
   self.icon = icon;
   self.test = test;
+  self.track:Enable();
   self:SetNamePlate();
   self:RegisterEvents();
   self:SetFrameStyle();
@@ -105,6 +109,8 @@ function MrTargetUnit:UnsetUnit()
   self.healthMax = 1;
   self.power = 1;
   self.powerMax = 1;
+  self.auras:Destroy();
+  self.track:Disable();
   self:UnregisterEvents();
   self:Hide();
 end
@@ -166,6 +172,7 @@ function MrTargetUnit:UnitUpdate()
         self.power = 0;
         self.range = nil;
         self.dead = true;
+        self.auras:CleanAuras();
       elseif self.dead then
         self.dead = false;
       end
@@ -178,6 +185,7 @@ function MrTargetUnit:PlayerDead()
   self.power = 0;
   self.range = nil;
   self.dead = true;
+  self.auras:PlayerDead();
 end
 
 function MrTargetUnit:UnitCheck(unit)

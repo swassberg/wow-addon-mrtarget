@@ -231,6 +231,18 @@ function MrTargetAuras:MovePositions()
   end
 end
 
+function MrTargetAuras:CleanAuras()
+  for i=1,self.max do
+    if not self.frames[i].cooldown then
+      self:UnsetAura(self.frames[i]);
+    end
+  end
+end
+
+function MrTargetAuras:PlayerDead()
+  self:CleanAuras();
+end
+
 function MrTargetAuras:Destroy()
   for i=1,self.max do
     self:UnsetAura(self.frames[i]);
@@ -279,6 +291,10 @@ function MrTargetAuras:CombatLogAuraCheck(sourceName, destName, spellId)
   if MrTarget.active then
     if self.parent.unit then
       if (sourceName and self.parent.name == sourceName) or (destName and self.parent.name == destName) then
+        -- local name, rank, icon, castingTime, minRange, maxRange, id = GetSpellInfo(spellId);
+        -- if name == 'Orb of Power' then
+        --   print(name, id, AURAS[id].icon)
+        -- end
         if COOLDOWNS[spellId] then
           local name, rank, icon, castingTime, minRange, maxRange, id = GetSpellInfo(COOLDOWNS[spellId]);
           if id and not self.auras[id] and not self.cooldowns[id] then

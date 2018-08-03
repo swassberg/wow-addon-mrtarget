@@ -19,8 +19,7 @@ function MrTargetRange:New(parent)
   this.frame = CreateFrame('Frame', parent.frame:GetName()..'Range', parent.frame);
   this.frame:SetScript('OnUpdate', function(frame, time) this:OnUpdate(time); end);
   this.frame:SetScript('OnEvent', function(frame, ...) this:OnEvent(...); end);
-  this.frame:RegisterEvent('COMBAT_LOG_EVENT_UNFILTERED');
-  this.frame:Show();
+  this:Enable();
   return this;
 end
 
@@ -106,6 +105,16 @@ function MrTargetRange:CombatLogRangeCheck(sourceName, destName, spellId)
       end
     end
   end
+end
+
+function MrTargetRange:Enable()
+  self.frame:RegisterEvent('COMBAT_LOG_EVENT_UNFILTERED');
+  self.frame:Show();
+end
+
+function MrTargetRange:Disable()
+  self.frame:UnregisterEvent('COMBAT_LOG_EVENT_UNFILTERED');
+  self.frame:Hide();
 end
 
 function MrTargetRange:OnEvent(event, ...)
