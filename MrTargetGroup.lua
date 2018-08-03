@@ -1,6 +1,6 @@
 -- MrTargetGroup
 -- =====================================================================
--- Copyright (C) 2016 Lock of War, Renevatium
+-- Copyright (C) Lock of War, Renevatium
 --
 
 local NAME_OPTIONS = {
@@ -90,6 +90,8 @@ function MrTargetGroup:Activate()
   self.frame:RegisterEvent('PLAYER_TARGET_CHANGED');
   self.frame:RegisterEvent('UNIT_TARGET');
   self.frame:RegisterEvent('PLAYER_DEAD');
+  self:SetTarget(nil);
+  self:SetAssist(nil);
   self:Show();
 end
 
@@ -105,9 +107,13 @@ function MrTargetGroup:SetTarget(unit)
     self.frame.TARGET:ClearAllPoints();
     if self.columns > 1 then
       if MrTarget:GetOption('ICONS') then
-        self.frame.TARGET:SetPoint('TOPRIGHT', unit.frame, 'TOPLEFT', -4, -2);
+        if self.reverse then
+          self.frame.TARGET:SetPoint('TOPLEFT', unit.frame, 'TOPRIGHT', 4, -2);
+        else
+          self.frame.TARGET:SetPoint('TOPRIGHT', unit.frame, 'TOPLEFT', -4, -2);
+        end
       else
-        self.frame.TARGET:SetPoint('TOPRIGHT', unit.frame, 'TOPRIGHT', -4, -2);
+        self.frame.TARGET:SetPoint('TOPRIGHT', unit.frame, 'TOPRIGHT', -8, -2);
       end
     elseif self.reverse then
       self.frame.TARGET:SetPoint('TOPLEFT', unit.frame, 'TOPRIGHT', 4, -2);
@@ -144,9 +150,13 @@ function MrTargetGroup:SetAssist(unit)
     self.frame.ASSIST:ClearAllPoints();
     if self.columns > 1 then
       if MrTarget:GetOption('ICONS') then
-        self.frame.ASSIST:SetPoint('TOPRIGHT', unit.frame, 'TOPLEFT', -6, -4);
+        if self.reverse then
+          self.frame.ASSIST:SetPoint('TOPLEFT', unit.frame, 'TOPRIGHT', 8, -4);
+        else
+          self.frame.ASSIST:SetPoint('TOPRIGHT', unit.frame, 'TOPLEFT', -6, -4);
+        end
       else
-        self.frame.ASSIST:SetPoint('TOPRIGHT', unit.frame, 'TOPRIGHT', -6, -4);
+        self.frame.ASSIST:SetPoint('TOPRIGHT', unit.frame, 'TOPRIGHT', -10, -4);
       end
     elseif self.reverse then
       self.frame.ASSIST:SetPoint('TOPLEFT', unit.frame, 'TOPRIGHT', 8, -4);
@@ -211,13 +221,13 @@ function MrTargetGroup:UpdateBattlefieldScore()
     local numScores = GetNumBattlefieldScores();
     if numScores > 0 then
       self.next_name = 1;
-      self.units = table.wipe(self.units);
+      local units = {};
       for i=1, numScores do
         local name, _, _, _, _, faction, race, _, class, _, _, _, _, _, _, spec = GetBattlefieldScore(i);
         if (faction == self.faction) == self.friendly then
           class = class or select(2, UnitClass(name));
           if ROLES[class][spec] then
-            table.insert(self.units, {
+            table.insert(units, {
               name=name,
               display=name,
               class=class,
@@ -228,6 +238,8 @@ function MrTargetGroup:UpdateBattlefieldScore()
           end
         end
       end
+      self.units = table.wipe(self.units);
+      self.units = units;
       table.sort(self.units, SortUnits);
       for i=1,#self.units do
         self.units[i].display = self:GetDisplayName(self.units[i].name);
@@ -279,6 +291,11 @@ end
 function MrTargetGroup:PlayerDead()
   self:SetTarget(nil);
   self:SetAssist(nil);
+  for i=1, #self.frames do
+    if self.frames[i] then
+      self.frames[i]:PlayerDead();
+    end
+  end
 end
 
 function MrTargetGroup:PlayerRegenEnabled()
@@ -328,8 +345,6 @@ function MrTargetGroup:OnUpdate(time)
     self:UpdateLayout();
     self.update_units = false;
   end
-  -- self:SetTarget(self.frames[1]);
-  -- self:SetAssist(self.frames[1]);
   self.update = 0;
 end
 
@@ -443,14 +458,14 @@ function MrTargetGroup:GetPosition()
 end
 
 function MrTargetGroup:OnDragStart()
-  if InterfaceOptionsFrame:IsShown() then
+  if not MrTarget:GetLocked() then
     self.frame:ClearAllPoints();
     self.frame:StartMoving();
   end
 end
 
 function MrTargetGroup:OnDragStop()
-  if InterfaceOptionsFrame:IsShown() then
+  if not MrTarget:GetLocked() then
     MrTarget.OPTIONS[self.max].POSITION[self.group] = self:GetPosition();
     self.frame:StopMovingOrSizing();
     self:UpdateOrientation();

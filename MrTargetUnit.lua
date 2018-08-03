@@ -1,6 +1,6 @@
 -- MrTargetUnit
 -- =====================================================================
--- Copyright (C) 2016 Lock of War, Renevatium
+-- Copyright (C) Lock of War, Renevatium
 --
 
 local POWER_BAR_COLORS = {
@@ -80,6 +80,7 @@ function MrTargetUnit:SetUnit(unit, name, display, class, spec, role, icon, test
   self.role = role;
   self.icon = icon;
   self.test = test;
+  self:SetNamePlate();
   self:RegisterEvents();
   self:SetFrameStyle();
   self.frame:Show();
@@ -98,6 +99,7 @@ function MrTargetUnit:UnsetUnit()
   self.frame.SPEC:SetText('');
   self.frame.SPEC_ICON:SetTexture(nil);
   self.frame.NAME:SetText('');
+  self:UnsetNamePlate();
   self.health = 1;
   self.healthMax = 1;
   self.power = 1;
@@ -123,7 +125,6 @@ end
 
 function MrTargetUnit:Destroy()
   self:UnsetUnit();
-  self.auras:Destroy();
 end
 
 function MrTargetUnit:UnitHealthColor(alpha)
@@ -154,17 +155,27 @@ function MrTargetUnit:UnitUpdate()
     self.healthMax = UnitHealthMax(self.unit);
     self.power = UnitPower(self.unit);
     self.powerMax = UnitPowerMax(self.unit);
-    if UnitIsDeadOrGhost(self.unit) or UnitHealth(self.unit) == 0 then
-      self.health = 0;
-      self.power = 0;
-      self.range = nil;
-      self.dead = true;
-      self.auras:Destroy();
-    else
-      self.auras:UnitAura(self.unit);
-      self.dead = false;
+    if UnitExists(self.unit) then
+      if UnitIsDeadOrGhost(self.unit) or UnitHealth(self.unit) <= 0 then
+        self.health = 0;
+        self.power = 0;
+        self.range = nil;
+        self.dead = true;
+        self.auras:UnitDead();
+      else
+        self.auras:UnitAura(self.unit);
+        self.dead = false;
+      end
     end
   end
+end
+
+function MrTargetUnit:PlayerDead()
+  self.health = 0;
+  self.power = 0;
+  self.range = nil;
+  self.dead = true;
+  self.auras:Destroy();
 end
 
 function MrTargetUnit:UnitCheck(unit)
@@ -196,6 +207,12 @@ function MrTargetUnit:GetUnit(unit)
       self.unit = unit;
     elseif GetUnitName(unit..'target', true) == self.name then
       self.unit = unit..'target';
+    elseif GetUnitName(unit..'targettarget', true) == self.name then
+      self.unit = unit..'targettarget';
+    elseif GetUnitName(unit..'targettargettarget', true) == self.name then
+      self.unit = unit..'targettargettarget';
+    else
+      self:UnitLost();
     end
   end
   self.frame.unit = self.unit;
@@ -212,7 +229,6 @@ function MrTargetUnit:UnitLost()
       return;
     end
   end
-  self.auras:Destroy();
 end
 
 function MrTargetUnit:OnUpdate(time)
@@ -242,7 +258,9 @@ function MrTargetUnit:UpdateDisplay()
       self.health = self.healthMax;
       self.power = self.powerMax;
     end
-    self:SetAlpha(0.5);
+    if MrTarget:GetOption('RANGE') then
+      self:SetAlpha(0.5);
+    end
     self:UnitLost();
   elseif MrTarget:GetOption('RANGE') and self.range == nil then
     self:SetAlpha(0.5);
@@ -261,16 +279,21 @@ end
 function MrTargetUnit:OnEnter() self.frame.HOVER:Show(); end
 function MrTargetUnit:OnLeave() self.frame.HOVER:Hide(); end
 
-function MrTargetUnit:OnEvent(event, unit, x, y, z)
+function MrTargetUnit:OnEvent(event, unit, ...)
   if event == 'UNIT_HEALTH_FREQUENT' then self:UnitCheck(unit);
   elseif event == 'UNIT_COMBAT' then self:UnitCheck(unit);
   elseif event == 'UNIT_TARGET' then self:UnitCheck(unit);
   elseif event == 'UPDATE_MOUSEOVER_UNIT' then self:UnitCheck('mouseover');
   elseif event == 'PLAYER_REGEN_ENABLED' then self:PlayerRegenEnabled();
+  elseif event == 'COMBAT_LOG_EVENT_UNFILTERED' then
+    local _, _, _, sourceName, _, _, _, destName, _, _, spellId = ...;
+    self.auras:CombatLogRangeCheck(sourceName, destName, spellId);
+    self.track:CombatLogRangeCheck(sourceName, destName, spellId);
   end
 end
 
 function MrTargetUnit:RegisterEvents()
+  self.frame:RegisterEvent('COMBAT_LOG_EVENT_UNFILTERED');
   self.frame:RegisterEvent('UNIT_HEALTH_FREQUENT');
   self.frame:RegisterEvent('UPDATE_MOUSEOVER_UNIT');
   self.frame:RegisterEvent('UNIT_COMBAT');
@@ -278,6 +301,7 @@ function MrTargetUnit:RegisterEvents()
 end
 
 function MrTargetUnit:UnregisterEvents()
+  self.frame:UnregisterEvent('COMBAT_LOG_EVENT_UNFILTERED');
   self.frame:UnregisterEvent('UNIT_HEALTH_FREQUENT');
   self.frame:UnregisterEvent('UPDATE_MOUSEOVER_UNIT');
   self.frame:UnregisterEvent('UNIT_COMBAT');
@@ -297,6 +321,20 @@ function MrTargetUnit:GetPosition()
     local point, relativeTo, relativePoint, x, y = self.frame:GetPoint(i);
     return { point, relativeTo, relativePoint, x, y };
   end
+end
+
+function MrTargetUnit:SetNamePlate()
+  -- for i, frame in pairs({WorldFrame:GetChildren()}) do
+  --   local name = frame:GetName()
+  --   if name and strmatch(name, "NamePlate") and frame:IsShown() then
+  --     local unitFrame = frame:GetChildren()
+  --     local unit = unitFrame and unitFrame:GetAttribute("unit")
+  --     print(unit);
+  --   end
+  -- end
+end
+
+function MrTargetUnit:UnsetNamePlate()
 end
 
 function MrTargetUnit:SetStyleDefault()

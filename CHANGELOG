@@ -1,9 +1,24 @@
-MrTarget v5.1.2
+MrTarget v5.2.1
 =====================================================================
-Copyright (C) 2016 Lock of War, Renevatium
+Copyright (C) Lock of War, Renevatium
 
 Legion v7.2.0
 ---------------------------------------------------------------------
+05/05/2017
+v5.2.1
+Auras work on all size battlegrounds
+Updated demo options display
+
+19/04/2017
+v5.2.0
+Added lock/unlock slashcommands (Baggyman17)
+Display PvP Trinkets with cooldown as combat auras
+Improved unit tracking
+Added localization support
+Chinese (zhCN) localizations (supercclolz)
+French (frFR) localizations
+Russian (ruRU) localizations
+
 05/04/2017
 v5.1.2
 Added support for Brawl: Arathi Blizzard

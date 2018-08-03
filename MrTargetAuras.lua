@@ -1,7 +1,23 @@
 -- MrTargetAuras
 -- =====================================================================
--- Copyright (C) 2016 Lock of War, Renevatium
+-- Copyright (C) Lock of War, Renevatium
 --
+
+local COOLDOWNS = {};
+local COOLDOWNS_TEMP = {
+    7744, -- Will of the Forsaken (Undead)
+   42292, -- PVP Trinket
+   59752, -- Every Man for Himself
+  195710, -- Honorable Medallion
+  208683  -- Gladiators Medallion
+};
+
+for i=1, #COOLDOWNS_TEMP do
+  local name, _, icon = GetSpellInfo(COOLDOWNS_TEMP[i]);
+  if name then
+    COOLDOWNS[COOLDOWNS_TEMP[i]] = name;
+  end
+end
 
 local AURAS = {};
 local AURAS_TEMP = {
@@ -16,25 +32,11 @@ for i=1, #AURAS_TEMP do
   end
 end
 
-
-
-local COOLDOWNS = {};
-local COOLDOWNS_TEMP = {
-  42292, -- PVP Trinket
-  59752, -- Every Man for Himself
-  208683 -- Gladiators Medallion
-};
-
-for i=1, #COOLDOWNS_TEMP do
-  local name, _, icon = GetSpellInfo(COOLDOWNS_TEMP[i]);
-  if name then
-    COOLDOWNS[i] = name;
-  end
-end
-
 MrTargetAuras = {
   parent=nil,
-  max=9,
+  cooldowns={},
+  auras={},
+  max=6,
   count=1
 };
 
@@ -44,6 +46,7 @@ function MrTargetAuras:New(parent)
   local this = setmetatable({}, MrTargetAuras);
   this.frames = setmetatable({}, nil);
   this.auras = setmetatable({}, nil);
+  this.cooldowns = setmetatable({}, nil);
   this.parent = parent;
   for i=1, this.max do
     this.frames[i] = CreateFrame('Button', parent.frame:GetName()..'Aura'..i, parent.frame, 'MrTargetAuraTemplate');
@@ -53,57 +56,65 @@ function MrTargetAuras:New(parent)
   return this;
 end
 
-function MrTargetAuras:SetAura(count, frame, id, name, duration, expires, icon)
-  if not self.auras[id] then
-    self.auras[id] = name;
-    frame.id = id;
-    frame.spell = name;
-    frame.update = GetTime();
-    frame.duration = duration;
-    frame.time = expires-GetTime();
-    frame.icon = icon;
-    frame.ICON:SetTexture(icon);
-    frame:ClearAllPoints();
-    if self.parent.parent.reverse then frame:SetPoint('TOPRIGHT', frame:GetParent(), 'TOPLEFT', -4-((count-1)*38), 0);
-    else frame:SetPoint('TOPLEFT', frame:GetParent(), 'TOPRIGHT', 4+((count-1)*38), 0);
-    end
-    return 1;
+function MrTargetAuras:UpdateAura(count, id, name, duration, expires, icon, cooldown)
+  self.auras[id] = count;
+  self.frames[count].id = id;
+  self.frames[count].spell = name;
+  self.frames[count].update = GetTime();
+  self.frames[count].duration = duration;
+  self.frames[count].time = expires > 0 and expires-GetTime() or nil;
+  self.frames[count].icon = icon;
+  self.frames[count].cooldown = cooldown;
+  self.frames[count].ICON:SetTexture(icon);
+  self.frames[count]:ClearAllPoints();
+  self:UpdatePositions();
+  return 1;
+end
+
+function MrTargetAuras:SetAura(count, id, name, duration, expires, icon, cooldown)
+  if self.frames[count] and not self.auras[id] then
+    return self:UpdateAura(count, id, name, duration, expires, icon, cooldown);
+  elseif self.auras[id] and self.frames[self.auras[id]] then
+    return self:UpdateAura(self.auras[id], id, name, duration, expires, icon, cooldown);
+  else
+    return 0;
   end
-  return 0;
 end
 
 function MrTargetAuras:UnsetAura(frame)
-  frame.id = nil;
-  frame.spell = nil;
-  frame.update = GetTime();
-  frame.duration = 0;
-  frame.time = 0;
-  frame.icon = nil;
-  frame.ICON:SetTexture(nil);
-  frame.expires:SetText('');
+  if frame.id then
+    self.auras[frame.id] = false;
+    if frame.cooldown then
+      self.cooldowns[frame.id] = false;
+    end
+    frame.id = nil;
+    frame.spell = nil;
+    frame.update = GetTime();
+    frame.duration = 0;
+    frame.time = 0;
+    frame.icon = nil;
+    frame.cooldown = false;
+    frame.ICON:SetTexture(nil);
+    frame.expires:SetText('');
+  end
 end
 
-function MrTargetAuras:UnitAura(unit)
-  if MrTarget:GetOption('AURAS') then
-    self.auras = table.wipe(self.auras);
-    self.count = self:UpdateCooldowns(1, unit);
-    self.count = self:UpdateCarriers(self.count, unit);
-    self.count = self:UpdateDebuff(self.count, unit);
-    for i=self.count,self.max do
+function MrTargetAuras:ClearAuras()
+  for i=1,self.max do
+    if not self.frames[i].id or (self.frames[i].time and self.frames[i].time <= 0) then
       self:UnsetAura(self.frames[i]);
     end
   end
 end
 
-function MrTargetAuras:UpdateCooldowns(count, unit)
-  for i=1,#COOLDOWNS do
-    if count > self.max then break; end
-    local name, rank, icon, stack, type, duration, expires, source, _, _, id = UnitAura(unit, COOLDOWNS[i]);
-    if name and icon then
-      local cooldown = GetSpellCooldown(id)
+function MrTargetAuras:UnitAura(unit)
+  if UnitExists(unit) then
+    self:ClearAuras();
+    self.count = self:UpdateCarriers(mrtarget_count(self.cooldowns)+1, unit);
+    if MrTarget:GetOption('AURAS') then
+      self.count = self:UpdateAuras(self.count, unit);
     end
   end
-  return count;
 end
 
 function MrTargetAuras:UpdateCarriers(count, unit)
@@ -111,7 +122,13 @@ function MrTargetAuras:UpdateCarriers(count, unit)
     if count > self.max then break; end
     local name, rank, icon, stack, type, duration, expires, source, _, _, id = UnitAura(unit, AURAS[i]);
     if name and icon then
-      count = count+self:SetAura(count, self.frames[count], id, name, duration, expires, icon);
+      count = count+self:SetAura(count, id, name, duration, expires, icon, false);
+    else
+      id = select(7, GetSpellInfo(AURAS[i]));
+      if self.auras[id] then
+        self:UnsetAura(self.frames[self.auras[id]]);
+        self:UpdatePositions();
+      end
     end
   end
   return count;
@@ -119,29 +136,45 @@ end
 
 function MrTargetAuras:UpdateAuras(count, unit)
   if self.parent.parent.friendly then
-    return self:UpdateBuff(self.count, unit);
+    return self:UpdateBuff(count, unit);
   else
-    return self:UpdateDebuff(self.count, unit);
+    return self:UpdateDebuff(count, unit);
   end
 end
 
-function MrTargetAuras:UpdateDebuff(count, unit)
+function MrTargetAuras:UpdateBuff(count, unit)
+  local auras = {};
   for i=1,40 do
     if count > self.max then break; end
-    local name, rank, icon, stack, type, duration, expires, source, _, _, id = UnitDebuff(unit, i, 'PLAYER');
-    if name and icon then
-      count = count+self:SetAura(count, self.frames[count], id, name, duration, expires, icon);
+    local name, rank, icon, stack, type, duration, expires, source, _, _, id = UnitBuff(unit, i, 'PLAYER');
+    if name and icon and tonumber(expires) > 0 then
+      count = count+self:SetAura(count, id, name, duration, expires, icon, false);
+      auras[id] = name;
+    end
+  end
+  for i=self.count,self.max do
+    if self.frames[i].id and not auras[self.frames[i].id] then
+      self:UnsetAura(self.frames[i]);
+      self:UpdatePositions();
     end
   end
   return count;
 end
 
-function MrTargetAuras:UpdateBuff(count, unit)
+function MrTargetAuras:UpdateDebuff(count, unit)
+  local auras = {};
   for i=1,40 do
     if count > self.max then break; end
-    local name, rank, icon, stack, type, duration, expires, source, _, _, id = UnitBuff(unit, i, 'PLAYER');
+    local name, rank, icon, stack, type, duration, expires, source, _, _, id = UnitDebuff(unit, i, 'PLAYER');
     if name and icon then
-      count = count+self:SetAura(count, self.frames[count], id, name, duration, expires, icon);
+      count = count+self:SetAura(count, id, name, duration, expires, icon, false);
+      auras[id] = name;
+    end
+  end
+  for i=self.count,self.max do
+    if self.frames[i].id and not auras[self.frames[i].id] then
+      self:UnsetAura(self.frames[i]);
+      self:UpdatePositions();
     end
   end
   return count;
@@ -152,12 +185,39 @@ function MrTargetAuras:UpdatePositions()
   for i=1,self.max do
     if self.frames[i].id then
       self.frames[i]:ClearAllPoints();
-      if self.parent.parent.reverse then self.frames[i]:SetPoint('TOPRIGHT', self.frames[i]:GetParent(), 'TOPLEFT', -4-((count-1)*38), 0);
-      else self.frames[i]:SetPoint('TOPLEFT', self.frames[i]:GetParent(), 'TOPRIGHT', 4+((count-1)*38), 0);
+      if MrTarget:GetOption('COLUMNS') == 1 then
+        if self.parent.parent.reverse then self.frames[i]:SetPoint('TOPRIGHT', self.frames[i]:GetParent(), 'TOPLEFT', -4-((count-1)*38), 0);
+        else self.frames[i]:SetPoint('TOPLEFT', self.frames[i]:GetParent(), 'TOPRIGHT', 4+((count-1)*38), 0); end
+        self.frames[i]:SetSize(36, 36);
+        self.frames[i].expires:Show();
+      else
+        self.frames[i]:SetPoint('BOTTOMLEFT', self.frames[i]:GetParent(), 'BOTTOMLEFT', 2+((count-1)*16), 3);
+        self.frames[i]:SetSize(16, 16);
+        self.frames[i].expires:Hide();
       end
       count = count+1;
     end
   end
+end
+
+function MrTargetAuras:MovePositions()
+  for i=self.max,1,-1 do
+    if self.frames[i].id and self.frames[i+1] then
+      self.auras[self.frames[i].id] = false;
+      self:SetAura(i+1,
+        self.frames[i].id,
+        self.frames[i].spell,
+        self.frames[i].duration,
+        GetTime()+(self.frames[i].time or 0),
+        self.frames[i].icon,
+        self.frames[i].cooldown
+      );
+    end
+  end
+end
+
+function MrTargetAuras:UnitDead()
+  self:Destroy();
 end
 
 function MrTargetAuras:Destroy()
@@ -167,15 +227,16 @@ function MrTargetAuras:Destroy()
 end
 
 function MrTargetAuras:UpdateExpires(frame)
-  if frame.time then
+  if frame.time ~= nil then
     frame.time = tonumber(frame.time) - (GetTime()-frame.update);
     frame.time = math.floor((frame.time*10)+0.5)/10;
-    if frame.duration == 0 then
+    if frame.expires == 0 then
       frame.expires:SetText('');
     elseif frame.time < 0 then
       self:UnsetAura(frame);
       self:UpdatePositions();
     elseif frame.time <= 60 then
+      frame.expires:SetText(frame.time);
       local time = frame.time > 0 and frame.time or '';
       frame.expires:SetText(time);
     else
@@ -195,33 +256,21 @@ function MrTargetAuras:OnUpdate(frame)
   end
 end
 
-
-
--- local defaultcdtime = 6
--- local channel = "RAID_WARNING"
-
--- local frame = CreateFrame("frame", nil)
--- SlashCmdList['COUNTDOWN'] = function(newtime)
---     if newtime ~= "" then
---         cdtime = newtime+1
---     else
---         cdtime = defaultcdtime+1
---     end
---     local ending = false
---     local start = floor(GetTime())
---     local throttle = cdtime
---     frame:SetScript("OnUpdate", function()
---         if ending == true then return end
---         local countdown = (start - floor(GetTime()) + cdtime)
---         if (countdown + 1) == throttle and countdown >= 0 then
---             if countdown == 0 then
---                 SendChatMessage('Pulling', channel)
---                 throttle = countdown
---                 ending = true
---             else
---                 SendChatMessage(countdown, channel)
---                 throttle = countdown
---             end
---         end
---     end)
--- end
+function MrTargetAuras:CombatLogRangeCheck(sourceName, destName, spellId)
+  if MrTarget.active then
+    if COOLDOWNS[spellId] then
+      if self.parent.unit then
+        if (sourceName and self.parent.name == sourceName) or (destName and self.parent.name == destName) then
+          local name, rank, icon, castingTime, minRange, maxRange, id = GetSpellInfo(COOLDOWNS[spellId]);
+          if id and not self.auras[id] then
+            self.cooldowns[id] = true;
+            self:MovePositions();
+            self:SetAura(1, id, name, 120, GetTime()+120, icon, true);
+            self:UnitAura(self.parent.unit);
+            self:UpdatePositions();
+          end
+        end
+      end
+    end
+  end
+end

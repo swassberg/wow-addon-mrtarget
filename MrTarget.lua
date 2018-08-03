@@ -1,20 +1,22 @@
--- MrTarget v5.1.2
+-- MrTarget v5.2.1
 -- =====================================================================
 -- This Work is provided under the Creative Commons
 -- Attribution-NonCommercial-NoDerivatives 4.0 International Public License
 --
 -- Please send any bugs or feedback to mrtarget@lockofwar.com.
--- Debug /run print((select(4, GetBuildInfo())));
+-- MapID: /run print((select(8, GetInstanceInfo())));
+-- Debug: /run print((select(4, GetBuildInfo())));
 
 local BATTLEFIELD_SIZES = { 10, 15, 40 };
+local SCALE = UIParent:GetEffectiveScale();
 
 local DEFAULT_BATTLEFIELD_OPTIONS = {
   ENABLED=true,
   ENEMY=true,
   FRIENDLY=true,
   POSITION={
-    HARMFUL={ 'TOPRIGHT', nil, 'TOPRIGHT', -(GetScreenWidth()*UIParent:GetEffectiveScale())/15, -(GetScreenHeight()*UIParent:GetEffectiveScale())/3 },
-    HELPFUL={ 'TOPLEFT', nil, 'TOPLEFT', (GetScreenWidth()*UIParent:GetEffectiveScale())/15, -(GetScreenHeight()*UIParent:GetEffectiveScale())/3 },
+    HARMFUL={ 'TOPRIGHT', nil, 'TOPRIGHT', -(GetScreenWidth()*SCALE)/15, -(GetScreenHeight()*SCALE)/3 },
+    HELPFUL={ 'TOPLEFT', nil, 'TOPLEFT', (GetScreenWidth()*SCALE)/15, -(GetScreenHeight()*SCALE)/3 },
   },
   BORDERLESS=false,
   ICONS=false,
@@ -27,26 +29,32 @@ local DEFAULT_BATTLEFIELD_OPTIONS = {
   COLUMNS=1
 };
 
-function copy(obj, seen)
+function mrtarget_copy(obj, seen)
   if type(obj) ~= 'table' then return obj end
   if seen and seen[obj] then return seen[obj] end
   local s = seen or {}
   local res = setmetatable({}, getmetatable(obj))
   s[obj] = res
-  for k, v in pairs(obj) do res[copy(k, s)] = copy(v, s) end
+  for k, v in pairs(obj) do res[mrtarget_copy(k, s)] = mrtarget_copy(v, s) end
   return res
+end
+
+function mrtarget_count(obj)
+  local length = 0;
+  for k, v in pairs(obj) do
+     length = length + 1;
+  end
+  return length;
 end
 
 local DEFAULT_OPTIONS = {}
 for k,v in pairs(BATTLEFIELD_SIZES) do
-  DEFAULT_OPTIONS[v] = copy(DEFAULT_BATTLEFIELD_OPTIONS);
+  DEFAULT_OPTIONS[v] = mrtarget_copy(DEFAULT_BATTLEFIELD_OPTIONS);
 end
 
 DEFAULT_OPTIONS[15].COLUMNS = 2;
-DEFAULT_OPTIONS[15].AURAS = false;
 DEFAULT_OPTIONS[40].COLUMNS = 4;
 DEFAULT_OPTIONS[40].FRIENDLY = false;
-DEFAULT_OPTIONS[40].AURAS = false;
 
 local FRIENDS = {
   'Jaina', 'Uther', 'Anduin', 'Valeera', 'Thrall', 'Gul\'dan', 'Garrosh', 'Arthas',
@@ -85,12 +93,13 @@ MrTarget = CreateFrame('Frame', 'MrTarget', UIParent);
 function MrTarget:Load()
   self.loaded=true;
   self.active=false;
-  self.version='v5.1.2';
+  self.version='v5.2.1';
   self.difficulty = false;
   self.frames={};
   self.size=40;
   self.objectives=false;
   self.options_open=false;
+  self.locked = true;
   self.player={
     helpful=setmetatable({}, nil),
     harmful=setmetatable({}, nil)
@@ -196,7 +205,8 @@ function MrTarget:PlayerLogin()
 end
 
 function MrTarget:HelloWorld()
-  local message = '|cFF00FFFF <MrTarget-'..self.version..'>|cFFFF0000 Even the Score.|r Type /mrt for interface options.';
+  local message = '|cFF00FFFF <MrTarget-'..self.version..'>|cFFFF0000 %s|r %s';
+  message = string.format(message, MRTARGET_STRINGS_EVEN, MRTARGET_STRINGS_OPEN);
   ChatFrame1:AddMessage(message, 0, 0, 0, GetChatTypeIndex('SYSTEM'));
 end
 
@@ -207,7 +217,7 @@ end
 function MrTarget:GetOptions()
   self.OPTIONS = MRTARGET_SETTINGS;
   if not self.OPTIONS or not self.OPTIONS[40] then
-    self.OPTIONS = copy(DEFAULT_OPTIONS);
+    self.OPTIONS = mrtarget_copy(DEFAULT_OPTIONS);
   end
 end
 
@@ -218,10 +228,10 @@ function MrTarget:InitOptions()
   InterfaceOptions_AddCategory(self.options_frame);
   for k,v in pairs(BATTLEFIELD_SIZES) do
     self.options_frame.tabs[v] = CreateFrame('Frame', 'MrTargetOptions'..v, self.options_frame, 'MrTargetOptionsTemplate');
-    self.options_frame.tabs[v].name = v..' man';
+    self.options_frame.tabs[v].name = string.format(MRTARGET_STRINGS_TAB_NAME, v);
     self.options_frame.tabs[v].parent = self.options_frame.name;
     self.options_frame.tabs[v].size = v;
-    self.options_frame.tabs[v].Title:SetText(string.upper(v..' Man Battlegrounds'));
+    self.options_frame.tabs[v].Title:SetText(string.format(MRTARGET_STRINGS_TAB_TITLE, v));
     self.options_frame.tabs[v].Subtitle:SetText('MrTarget '..self.version);
     self.options_frame.tabs[v].okay = function() MrTarget:SaveOptions(); end;
     self.options_frame.tabs[v].default = function() MrTarget:DefaultOptions(); end;
@@ -235,7 +245,7 @@ end
 
 function MrTarget:InitNamingOptions(default)
   for k,v in pairs(BATTLEFIELD_SIZES) do
-    UIDropDownMenu_Initialize(self.options_frame.tabs[v].Naming, function()
+    securecall('UIDropDownMenu_Initialize', self.options_frame.tabs[v].Naming, function()
       for i, option in pairs({ 'Transmute', 'Transliterate', 'Ignore' }) do
         UIDropDownMenu_AddButton({ owner=self.options_frame.tabs[v].Naming, text=option, value=option, checked=nil, arg1=option, func=(function(_, value)
           UIDropDownMenu_ClearAll(self.options_frame.tabs[v].Naming);
@@ -244,9 +254,9 @@ function MrTarget:InitNamingOptions(default)
         end)});
       end
     end);
-    UIDropDownMenu_SetAnchor(self.options_frame.tabs[v].Naming, 16, 22, 'TOPLEFT', self.options_frame.tabs[v].Naming:GetName()..'Left', 'BOTTOMLEFT');
-    UIDropDownMenu_JustifyText(self.options_frame.tabs[v].Naming, 'LEFT');
-    UIDropDownMenu_SetSelectedValue(self.options_frame.tabs[v].Naming, default);
+    securecall('UIDropDownMenu_SetAnchor', self.options_frame.tabs[v].Naming, 16, 22, 'TOPLEFT', self.options_frame.tabs[v].Naming:GetName()..'Left', 'BOTTOMLEFT');
+    securecall('UIDropDownMenu_JustifyText', self.options_frame.tabs[v].Naming, 'LEFT');
+    securecall('UIDropDownMenu_SetSelectedValue', self.options_frame.tabs[v].Naming, default);
   end
 end
 
@@ -305,29 +315,33 @@ function MrTarget:DefaultOptions()
 end
 
 function MrTarget:DisableOptions()
-  for k,v in pairs(BATTLEFIELD_SIZES) do
-    UIDropDownMenu_DisableDropDown(self.options_frame.tabs[v].Naming);
-    self.options_frame.tabs[v].Enabled:Disable();
-    self.options_frame.tabs[v].Enemy:Disable();
-    self.options_frame.tabs[v].Friendly:Disable();
-    self.options_frame.tabs[v].Power:Disable();
-    self.options_frame.tabs[v].Auras:Disable();
-    self.options_frame.tabs[v].Borderless:Disable();
-    self.options_frame.tabs[v].Icons:Disable();
+  if self.options_frame then
+    for k,v in pairs(BATTLEFIELD_SIZES) do
+      UIDropDownMenu_DisableDropDown(self.options_frame.tabs[v].Naming);
+      self.options_frame.tabs[v].Enabled:Disable();
+      self.options_frame.tabs[v].Enemy:Disable();
+      self.options_frame.tabs[v].Friendly:Disable();
+      self.options_frame.tabs[v].Power:Disable();
+      self.options_frame.tabs[v].Auras:Disable();
+      self.options_frame.tabs[v].Borderless:Disable();
+      self.options_frame.tabs[v].Icons:Disable();
+    end
   end
 end
 
 function MrTarget:EnableOptions()
-  for k,v in pairs(BATTLEFIELD_SIZES) do
-    UIDropDownMenu_EnableDropDown(self.options_frame.tabs[v].Naming);
-    self.options_frame.tabs[v].Enabled:Enable();
-    self.options_frame.tabs[v].Enemy:Enable();
-    self.options_frame.tabs[v].Friendly:Enable();
-    self.options_frame.tabs[v].Power:Enable();
-    self.options_frame.tabs[v].Borderless:Enable();
-    self.options_frame.tabs[v].Icons:Enable();
-    if self.OPTIONS.COLUMNS == 1 then
-      self.options_frame.tabs[v].Auras:Enable();
+  if self.options_frame then
+    for k,v in pairs(BATTLEFIELD_SIZES) do
+      UIDropDownMenu_EnableDropDown(self.options_frame.tabs[v].Naming);
+      self.options_frame.tabs[v].Enabled:Enable();
+      self.options_frame.tabs[v].Enemy:Enable();
+      self.options_frame.tabs[v].Friendly:Enable();
+      self.options_frame.tabs[v].Power:Enable();
+      self.options_frame.tabs[v].Borderless:Enable();
+      self.options_frame.tabs[v].Icons:Enable();
+      if self.OPTIONS.COLUMNS == 1 then
+        self.options_frame.tabs[v].Auras:Enable();
+      end
     end
   end
 end
@@ -351,15 +365,6 @@ function MrTarget:SetOptionColumns(columns)
   end
   if self.frames.HARMFUL then
     self.frames.HARMFUL:SetColumns(columns);
-  end
-  if self.options_frame.tabs[self.size] then
-    if columns > 1 then
-      self.options_frame.tabs[self.size].Auras:SetChecked(false);
-      self.OPTIONS[self.size][string.upper('auras')] = false;
-      self.options_frame.tabs[self.size].Auras:Disable();
-    else
-      self.options_frame.tabs[self.size].Auras:Enable();
-    end
   end
 end
 
@@ -395,10 +400,60 @@ function MrTarget:SetOptionSize(size)
   end
 end
 
+function MrTarget:CreateDemoAura(frame)
+  if self:GetOption('AURAS') then
+    frame.auras.auras = table.wipe(frame.auras.auras);
+    frame.auras:SetAura(1, 208683, select(1, GetSpellInfo(208683)), 120, GetTime()+120, select(3, GetSpellInfo(208683)));
+  end
+end
+
+function MrTarget:CreateDemo()
+  if self:GetOption('ENEMY') then
+    self.frames.HARMFUL:SetTarget(self.frames.HARMFUL.frames[1]);
+    self.frames.HARMFUL:SetAssist(self.frames.HARMFUL.frames[1]);
+    self:CreateDemoAura(self.frames.HARMFUL.frames[1]);
+    if self:GetOption('TARGETED') then
+      self.frames.HARMFUL.frames[1].update_targeted = false;
+      self.frames.HARMFUL.frames[1].targeted = 1;
+    else
+      self.frames.HARMFUL.frames[1].update_targeted = true;
+      self.frames.HARMFUL.frames[1].targeted = nil;
+    end
+  end
+  if self:GetOption('FRIENDLY') then
+    self.frames.HELPFUL:SetTarget(self.frames.HELPFUL.frames[1]);
+    self.frames.HELPFUL:SetAssist(self.frames.HELPFUL.frames[1]);
+    self:CreateDemoAura(self.frames.HELPFUL.frames[1])
+    if self:GetOption('TARGETED') then
+      self.frames.HELPFUL.frames[1].update_targeted = false;
+      self.frames.HELPFUL.frames[1].targeted = 1;
+    else
+      self.frames.HELPFUL.frames[1].update_targeted = true;
+      self.frames.HELPFUL.frames[1].targeted = nil;
+    end
+  end
+end
+
+function MrTarget:DestroyDemoAura(frame)
+  frame.auras.auras = table.wipe(frame.auras.auras);
+  frame.auras:UnsetAura(frame.auras.frames[1]);
+end
+
+function MrTarget:DestroyDemo()
+  if self:GetOption('ENEMY') then
+    self.frames.HARMFUL.frames[1].update_targeted = true;
+    self:DestroyDemoAura(self.frames.HARMFUL.frames[1]);
+  end
+  if self:GetOption('FRIENDLY') then
+    self.frames.HELPFUL.frames[1].update_targeted = true;
+    self:DestroyDemoAura(self.frames.HELPFUL.frames[1]);
+  end
+end
+
 function MrTarget:OpenOptions(size)
   if not self.active then
     self.size = size;
-    self:CloseOptions();
+    self:Unlock();
     self:Initialize();
     self.options_open = true;
     if self:GetOption('ENABLED') then
@@ -419,6 +474,7 @@ function MrTarget:OpenOptions(size)
         self.options_frame.tabs[size].Icons:Hide();
       end
       self:UpdateOptions();
+      self:CreateDemo();
     else
       self:Destroy();
     end
@@ -430,8 +486,22 @@ function MrTarget:CloseOptions()
     self:ObjectivesFrame(false);
     self.options_frame:Hide();
     self.options_open = false;
+    self:DestroyDemo();
+    self:Lock();
     self:Destroy();
   end
+end
+
+function MrTarget:GetLocked()
+  return self.locked;
+end
+
+function MrTarget:Lock()
+  self.locked = true;
+end
+
+function MrTarget:Unlock()
+  self.locked = false;
 end
 
 function MrTarget:Destroy()
@@ -475,6 +545,10 @@ function SlashCmdList.MRTARGET(cmd, box)
     MrTarget:Activate();
   elseif cmd == 'hide' then
     MrTarget:Destroy();
+  elseif cmd == 'unlock' then
+    MrTarget:Unlock()
+  elseif cmd == 'lock' then
+    MrTarget:Lock()
   else
     InterfaceOptionsFrame_OpenToCategory(MrTarget.options_frame);
     InterfaceOptionsFrame_OpenToCategory(MrTarget.options_frame.tabs[10]);

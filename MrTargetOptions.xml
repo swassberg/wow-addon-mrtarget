@@ -14,36 +14,42 @@
             <Anchor point="TOPLEFT" relativeTo="$parentSubtitle" relativePoint="BOTTOMLEFT" x="0" y="-5"/>
           </Anchors>
         </FontString>
-        <FontString name="$parentTitleNaming" inherits="GameFontHighlight" justifyH="LEFT" text="Russians">
+        <FontString name="$parentTitleNaming" inherits="GameFontHighlight" justifyH="LEFT" text="MRTARGET_STRINGS_RUSSIANS">
           <Anchors>
             <Anchor point="TOPLEFT" relativeTo="$parentTitle" relativePoint="BOTTOMLEFT" x="0" y="-140"/>
           </Anchors>
         </FontString>
-        <FontString name="$parentTitleSize" inherits="GameFontHighlight" justifyH="LEFT" text="Set Scale">
+        <FontString name="$parentTitleSize" inherits="GameFontHighlight" justifyH="LEFT" text="MRTARGET_STRINGS_SCALE">
           <Anchors>
             <Anchor point="TOPLEFT" relativeTo="$parentTitleNaming" relativePoint="BOTTOMLEFT" x="0" y="-55"/>
           </Anchors>
         </FontString>
-        <FontString name="$parentTitleLayout" inherits="GameFontHighlight" justifyH="LEFT" text="Layout">
+        <FontString name="$parentTitleLayout" inherits="GameFontHighlight" justifyH="LEFT" text="MRTARGET_STRINGS_LAYOUT">
           <Anchors>
             <Anchor point="TOPLEFT" relativeTo="$parentTitleSize" relativePoint="BOTTOMLEFT" x="0" y="-55"/>
           </Anchors>
         </FontString>
-        <FontString name="$parentTitleBorderless" inherits="GameFontHighlight" justifyH="LEFT" text="Style">
+        <FontString name="$parentTitleBorderless" inherits="GameFontHighlight" justifyH="LEFT" text="MRTARGET_STRINGS_STYLE">
           <Anchors>
             <Anchor point="TOPLEFT" relativeTo="$parentTitleLayout" relativePoint="BOTTOMLEFT" x="0" y="-80"/>
           </Anchors>
         </FontString>
-        <FontString name="$parentErrors" inherits="GameFontHighlightSmall" justifyH="LEFT" text="Please send any bugs or feedback to mrtarget@lockofwar.com or tweet @renevatium #MrTarget">
+        <FontString name="$parentErrors" inherits="GameFontHighlightSmall" justifyH="LEFT" text="MRTARGET_STRINGS_FEEDBACK">
           <Anchors>
             <Anchor point="BOTTOMLEFT" x="16" y="16"/>
             <Anchor point="BOTTOMRIGHT" x="-16" y="16"/>
           </Anchors>
         </FontString>
-        <FontString name="$parentInfo" inherits="GameFontNormalSmall" justifyH="LEFT" text="RIGHT-CLICK drag to move (only with this menu open). To avoid taint some options are disabled during battle.">
+        <FontString name="$parentTaint" inherits="GameFontHighlightSmall" justifyH="LEFT" text="MRTARGET_STRINGS_TAINT">
           <Anchors>
             <Anchor point="BOTTOMLEFT" relativeTo="$parentErrors" relativePoint="TOPLEFT" x="0" y="0" />
             <Anchor point="BOTTOMRIGHT" relativeTo="$parentErrors" relativePoint="TOPRIGHT" x="0" y="0" />
+          </Anchors>
+        </FontString>
+        <FontString name="$parentInfo" inherits="GameFontNormalSmall" justifyH="LEFT" text="MRTARGET_STRINGS_MOVE">
+          <Anchors>
+            <Anchor point="BOTTOMLEFT" relativeTo="$parentTaint" relativePoint="TOPLEFT" x="0" y="0" />
+            <Anchor point="BOTTOMRIGHT" relativeTo="$parentTaint" relativePoint="TOPRIGHT" x="0" y="0" />
           </Anchors>
         </FontString>
       </Layer>
@@ -55,7 +61,7 @@
         </Anchors>
         <Layers>
           <Layer level="ARTWORK">
-            <FontString name="$parentText" inherits="GameFontNormalSmall" parentKey="text" text="Enable MrTarget">
+            <FontString name="$parentText" inherits="GameFontNormalSmall" parentKey="text" text="MRTARGET_STRINGS_ENABLE">
               <Anchors>
                 <Anchor point="LEFT" relativeTo="$parent" relativePoint="RIGHT" x="0" y="1"/>
               </Anchors>
@@ -74,7 +80,7 @@
         </Anchors>
         <Layers>
           <Layer level="ARTWORK">
-            <FontString name="$parentText" inherits="GameFontNormalSmall" parentKey="text" text="Display enemy units">
+            <FontString name="$parentText" inherits="GameFontNormalSmall" parentKey="text" text="MRTARGET_STRINGS_ENEMIES">
               <Anchors>
                 <Anchor point="LEFT" relativeTo="$parent" relativePoint="RIGHT" x="0" y="1"/>
               </Anchors>
@@ -93,7 +99,7 @@
         </Anchors>
         <Layers>
           <Layer level="ARTWORK">
-            <FontString name="$parentText" inherits="GameFontNormalSmall" parentKey="text" text="Display friendly units">
+            <FontString name="$parentText" inherits="GameFontNormalSmall" parentKey="text" text="MRTARGET_STRINGS_FRIENDS">
               <Anchors>
                 <Anchor point="LEFT" relativeTo="$parent" relativePoint="RIGHT" x="0" y="1"/>
               </Anchors>
@@ -112,7 +118,7 @@
         </Anchors>
         <Layers>
           <Layer level="ARTWORK">
-            <FontString name="$parentText" inherits="GameFontNormalSmall" parentKey="text" text="Display power bars">
+            <FontString name="$parentText" inherits="GameFontNormalSmall" parentKey="text" text="MRTARGET_STRINGS_POWER">
               <Anchors>
                 <Anchor point="LEFT" relativeTo="$parent" relativePoint="RIGHT" x="0" y="1"/>
               </Anchors>
@@ -131,7 +137,7 @@
         </Anchors>
         <Layers>
           <Layer level="ARTWORK">
-            <FontString name="$parentText" inherits="GameFontNormalSmall" parentKey="text" text="Enable range tracking">
+            <FontString name="$parentText" inherits="GameFontNormalSmall" parentKey="text" text="MRTARGET_STRINGS_RANGE">
               <Anchors>
                 <Anchor point="LEFT" relativeTo="$parent" relativePoint="RIGHT" x="0" y="1"/>
               </Anchors>
@@ -150,7 +156,7 @@
         </Anchors>
         <Layers>
           <Layer level="ARTWORK">
-            <FontString name="$parentText" inherits="GameFontNormalSmall" parentKey="text" text="Enable target counters">
+            <FontString name="$parentText" inherits="GameFontNormalSmall" parentKey="text" text="MRTARGET_STRINGS_TARGETS">
               <Anchors>
                 <Anchor point="LEFT" relativeTo="$parent" relativePoint="RIGHT" x="0" y="1"/>
               </Anchors>
@@ -169,7 +175,7 @@
         </Anchors>
         <Layers>
           <Layer level="ARTWORK">
-            <FontString name="$parentText" inherits="GameFontNormalSmall" justifyH="LEFT" text="What should we do with Cyrillic names?">
+            <FontString name="$parentText" inherits="GameFontNormalSmall" justifyH="LEFT" text="MRTARGET_STRINGS_CYRILLIC">
               <Anchors>
                 <Anchor point="BOTTOMLEFT" relativePoint="TOPLEFT" x="18" y="2"/>
               </Anchors>
@@ -184,7 +190,7 @@
         </Anchors>
         <Layers>
           <Layer level="ARTWORK">
-            <FontString name="$parentLabel" inherits="GameFontNormalSmall" justifyH="LEFT" text="Size does Matter">
+            <FontString name="$parentLabel" inherits="GameFontNormalSmall" justifyH="LEFT" text="MRTARGET_STRINGS_SIZE">
               <Anchors>
                 <Anchor point="BOTTOMLEFT" relativePoint="TOPLEFT" x="-4" y="2"/>
               </Anchors>
@@ -216,7 +222,7 @@
         </Anchors>
         <Layers>
           <Layer level="ARTWORK">
-            <FontString name="$parentLabel" inherits="GameFontNormalSmall" justifyH="LEFT" text="How many columns should there be?">
+            <FontString name="$parentLabel" inherits="GameFontNormalSmall" justifyH="LEFT" text="MRTARGET_STRINGS_COLUMNS">
               <Anchors>
                 <Anchor point="BOTTOMLEFT" relativePoint="TOPLEFT" x="-4" y="2"/>
               </Anchors>
@@ -238,7 +244,7 @@
           </OnLoad>
           <OnValueChanged>
             self:SetValue(math.floor(self:GetValue()));
-            self.ValueText:SetText(self:GetValue()..' columns');
+            self.ValueText:SetText(string.format(MRTARGET_STRINGS_SLIDER_TEXT, self:GetValue()));
             MrTarget:SetOptionColumns(self:GetValue());
           </OnValueChanged>
         </Scripts>
@@ -249,7 +255,7 @@
         </Anchors>
         <Layers>
           <Layer level="ARTWORK">
-            <FontString name="$parentText" inherits="GameFontNormalSmall" parentKey="text" text="Display combat auras">
+            <FontString name="$parentText" inherits="GameFontNormalSmall" parentKey="text" text="MRTARGET_STRINGS_AURAS">
               <Anchors>
                 <Anchor point="LEFT" relativeTo="$parent" relativePoint="RIGHT" x="0" y="1"/>
               </Anchors>
@@ -268,7 +274,7 @@
         </Anchors>
         <Layers>
           <Layer level="ARTWORK">
-            <FontString name="$parentText" inherits="GameFontNormalSmall" text="Set to Borderless Mode (Shadowed)">
+            <FontString name="$parentText" inherits="GameFontNormalSmall" text="MRTARGET_STRINGS_BORDERLESS">
               <Anchors>
                 <Anchor point="LEFT" relativePoint="RIGHT" x="0" y="1"/>
               </Anchors>
@@ -289,7 +295,7 @@
         </Anchors>
         <Layers>
           <Layer level="ARTWORK">
-            <FontString name="$parentText" inherits="GameFontHighlightSmall" text="Show Unit Specification Icons">
+            <FontString name="$parentText" inherits="GameFontHighlightSmall" text="MRTARGET_STRINGS_ICONS">
               <Anchors>
                 <Anchor point="LEFT" relativePoint="RIGHT" x="0" y="1"/>
               </Anchors>
