@@ -7,8 +7,8 @@ MrTargetRange = {
   frame=nil,
   parent=nil,
   range=nil,
-  update=0,
-  frequency=0.5
+  frequency=0.5,
+  update=0
 };
 
 MrTargetRange.__index = MrTargetRange;
@@ -18,6 +18,8 @@ function MrTargetRange:New(parent)
   this.parent = parent;
   this.frame = CreateFrame('Frame', parent.frame:GetName()..'Range', parent.frame);
   this.frame:SetScript('OnUpdate', function(frame, time) this:OnUpdate(time); end);
+  this.frame:SetScript('OnEvent', function(frame, ...) this:OnEvent(...); end);
+  this.frame:RegisterEvent('COMBAT_LOG_EVENT_UNFILTERED');
   this.frame:Show();
   return this;
 end
@@ -57,7 +59,8 @@ function MrTargetRange:OnUpdate(time)
   end
   self.update = self.update + time;
   if self.update > self.frequency then
-    if self.parent.unit then
+    self.update = 0;
+    if UnitExists(self.parent.unit) then
       if self.parent:GetUnit(self.parent.unit) then
         if UnitIsConnected(self.parent.unit) and not UnitIsDeadOrGhost(self.parent.unit) then
           if UnitIsEnemy('player', self.parent.unit) then
@@ -69,7 +72,6 @@ function MrTargetRange:OnUpdate(time)
         self.parent.range = self.range;
       end
     end
-    self.update = 0;
   end
 end
 
@@ -99,5 +101,12 @@ function MrTargetRange:CombatLogRangeCheck(sourceName, destName, spellId)
         end
       end
     end
+  end
+end
+
+function MrTargetRange:OnEvent(event, ...)
+  if event == 'COMBAT_LOG_EVENT_UNFILTERED' then
+    local _, _, _, _, sourceName, _, _, _, destName, _, _, spellId = ...;
+    self:CombatLogRangeCheck(sourceName, destName, spellId);
   end
 end

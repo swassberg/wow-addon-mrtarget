@@ -93,9 +93,10 @@ function MrTargetUnit:UnsetUnit()
   self.spec = nil;
   self.role = nil;
   self.unit = nil;
-  self.frame.unit = nil;
+  self.range = nil;
   self.dead = false;
   self.test = false;
+  self.frame.unit = nil;
   self.frame.SPEC:SetText('');
   self.frame.SPEC_ICON:SetTexture(nil);
   self.frame.NAME:SetText('');
@@ -162,8 +163,7 @@ function MrTargetUnit:UnitUpdate()
         self.range = nil;
         self.dead = true;
         self.auras:UnitDead();
-      else
-        self.auras:UnitAura(self.unit);
+      elseif self.dead then
         self.dead = false;
       end
     end
@@ -284,24 +284,19 @@ function MrTargetUnit:OnEvent(event, unit, ...)
   elseif event == 'UNIT_COMBAT' then self:UnitCheck(unit);
   elseif event == 'UNIT_TARGET' then self:UnitCheck(unit);
   elseif event == 'UPDATE_MOUSEOVER_UNIT' then self:UnitCheck('mouseover');
-  elseif event == 'PLAYER_REGEN_ENABLED' then self:PlayerRegenEnabled();
-  elseif event == 'COMBAT_LOG_EVENT_UNFILTERED' then
-    local _, _, _, sourceName, _, _, _, destName, _, _, spellId = ...;
-    self.auras:CombatLogRangeCheck(sourceName, destName, spellId);
-    self.track:CombatLogRangeCheck(sourceName, destName, spellId);
+  elseif event == 'PLAYER_REGEN_ENABLED' then
+    self:PlayerRegenEnabled();
   end
 end
 
 function MrTargetUnit:RegisterEvents()
-  self.frame:RegisterEvent('COMBAT_LOG_EVENT_UNFILTERED');
-  self.frame:RegisterEvent('UNIT_HEALTH_FREQUENT');
+  self.frame:RegisterEvent('UNIT_wHEALTH_FREQUENT');
   self.frame:RegisterEvent('UPDATE_MOUSEOVER_UNIT');
   self.frame:RegisterEvent('UNIT_COMBAT');
   self.frame:RegisterEvent('UNIT_TARGET');
 end
 
 function MrTargetUnit:UnregisterEvents()
-  self.frame:UnregisterEvent('COMBAT_LOG_EVENT_UNFILTERED');
   self.frame:UnregisterEvent('UNIT_HEALTH_FREQUENT');
   self.frame:UnregisterEvent('UPDATE_MOUSEOVER_UNIT');
   self.frame:UnregisterEvent('UNIT_COMBAT');

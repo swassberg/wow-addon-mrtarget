@@ -37,7 +37,9 @@ MrTargetAuras = {
   cooldowns={},
   auras={},
   max=6,
-  count=1
+  count=1,
+  frequency=1,
+  update=0
 };
 
 MrTargetAuras.__index = MrTargetAuras;
@@ -48,9 +50,13 @@ function MrTargetAuras:New(parent)
   this.auras = setmetatable({}, nil);
   this.cooldowns = setmetatable({}, nil);
   this.parent = parent;
+  this.frame = CreateFrame('Frame', parent.frame:GetName()..'Auras', parent.frame);
+  this.frame:SetScript('OnUpdate', function(frame, time) this:OnUpdate(time); end);
+  this.frame:SetScript('OnEvent', function(frame, ...) this:OnEvent(...); end);
+  this.frame:RegisterEvent('COMBAT_LOG_EVENT_UNFILTERED');
   for i=1, this.max do
     this.frames[i] = CreateFrame('Button', parent.frame:GetName()..'Aura'..i, parent.frame, 'MrTargetAuraTemplate');
-    this.frames[i]:SetScript('OnUpdate', function(frame) this:OnUpdate(frame); end);
+    this.frames[i]:SetScript('OnUpdate', function(frame) this:OnUpdateFrame(frame); end);
     this.frames[i]:Show();
   end
   return this;
@@ -105,6 +111,7 @@ function MrTargetAuras:ClearAuras()
       self:UnsetAura(self.frames[i]);
     end
   end
+  self:UpdatePositions();
 end
 
 function MrTargetAuras:UnitAura(unit)
@@ -127,38 +134,19 @@ function MrTargetAuras:UpdateCarriers(count, unit)
       id = select(7, GetSpellInfo(AURAS[i]));
       if self.auras[id] then
         self:UnsetAura(self.frames[self.auras[id]]);
-        self:UpdatePositions();
       end
     end
   end
+  self:UpdatePositions();
   return count;
 end
 
 function MrTargetAuras:UpdateAuras(count, unit)
-  if self.parent.parent.friendly then
-    return self:UpdateBuff(count, unit);
-  else
+  if not self.parent.parent.friendly then
     return self:UpdateDebuff(count, unit);
+  else
+    return self:UpdateBuff(count, unit);
   end
-end
-
-function MrTargetAuras:UpdateBuff(count, unit)
-  local auras = {};
-  for i=1,40 do
-    if count > self.max then break; end
-    local name, rank, icon, stack, type, duration, expires, source, _, _, id = UnitBuff(unit, i, 'PLAYER');
-    if name and icon and tonumber(expires) > 0 then
-      count = count+self:SetAura(count, id, name, duration, expires, icon, false);
-      auras[id] = name;
-    end
-  end
-  for i=self.count,self.max do
-    if self.frames[i].id and not auras[self.frames[i].id] then
-      self:UnsetAura(self.frames[i]);
-      self:UpdatePositions();
-    end
-  end
-  return count;
 end
 
 function MrTargetAuras:UpdateDebuff(count, unit)
@@ -174,9 +162,28 @@ function MrTargetAuras:UpdateDebuff(count, unit)
   for i=self.count,self.max do
     if self.frames[i].id and not auras[self.frames[i].id] then
       self:UnsetAura(self.frames[i]);
-      self:UpdatePositions();
     end
   end
+  self:UpdatePositions();
+  return count;
+end
+
+function MrTargetAuras:UpdateBuff(count, unit)
+  local auras = {};
+  for i=1,40 do
+    if count > self.max then break; end
+    local name, rank, icon, stack, type, duration, expires, source, _, _, id = UnitBuff(unit, i, 'PLAYER');
+    if name and icon and tonumber(expires) > 0 and not COOLDOWNS[id] then -- and tonumber(duration) < 3600
+      count = count+self:SetAura(count, id, name, duration, expires, icon, false);
+      auras[id] = name;
+    end
+  end
+  for i=self.count,self.max do
+    if self.frames[i].id and not auras[self.frames[i].id] then
+      self:UnsetAura(self.frames[i]);
+    end
+  end
+  self:UpdatePositions();
   return count;
 end
 
@@ -246,7 +253,7 @@ function MrTargetAuras:UpdateExpires(frame)
   end
 end
 
-function MrTargetAuras:OnUpdate(frame)
+function MrTargetAuras:OnUpdateFrame(frame)
   if frame.id then
     if GetTime()-frame.update >= 0.1 then
       self:UpdateExpires(frame);
@@ -256,21 +263,35 @@ function MrTargetAuras:OnUpdate(frame)
   end
 end
 
+function MrTargetAuras:OnUpdate(time)
+  self.update = self.update + time;
+  if self.update > self.frequency then
+    self.update = 0;
+    self:UnitAura(self.parent.unit);
+  end
+end
+
 function MrTargetAuras:CombatLogRangeCheck(sourceName, destName, spellId)
   if MrTarget.active then
-    if COOLDOWNS[spellId] then
-      if self.parent.unit then
-        if (sourceName and self.parent.name == sourceName) or (destName and self.parent.name == destName) then
+    if self.parent.unit then
+      if (sourceName and self.parent.name == sourceName) or (destName and self.parent.name == destName) then
+        if COOLDOWNS[spellId] then
           local name, rank, icon, castingTime, minRange, maxRange, id = GetSpellInfo(COOLDOWNS[spellId]);
-          if id and not self.auras[id] then
+          if id and not self.auras[id] and not self.cooldowns[id] then
             self.cooldowns[id] = true;
             self:MovePositions();
             self:SetAura(1, id, name, 120, GetTime()+120, icon, true);
-            self:UnitAura(self.parent.unit);
-            self:UpdatePositions();
           end
         end
+        self:UnitAura(self.parent.unit);
       end
     end
+  end
+end
+
+function MrTargetAuras:OnEvent(event, ...)
+  if event == 'COMBAT_LOG_EVENT_UNFILTERED' then
+    local _, _, _, _, sourceName, _, _, _, destName, _, _, spellId = ...;
+    self:CombatLogRangeCheck(sourceName, destName, spellId);
   end
 end
