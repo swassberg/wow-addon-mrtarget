@@ -269,11 +269,11 @@ function MrTargetUnit:UpdateDisplay()
       self.power = self.powerMax;
     end
     if MrTarget:GetOption('RANGE') then
-      self:SetAlpha(0.5);
+      self:SetAlpha(0.75);
     end
     self:UnitLost();
   elseif MrTarget:GetOption('RANGE') and self.range == nil then
-    self:SetAlpha(0.5);
+    self:SetAlpha(0.75);
   else
     self:SetAlpha(1);
   end

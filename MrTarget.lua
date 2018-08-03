@@ -1,4 +1,4 @@
--- MrTarget v5.3.2
+-- MrTarget v5.3.3
 -- =====================================================================
 -- This Work is provided under the Creative Commons
 -- Attribution-NonCommercial-NoDerivatives 4.0 International Public License
@@ -94,7 +94,7 @@ MrTarget = CreateFrame('Frame', 'MrTarget', UIParent);
 function MrTarget:Load()
   self.loaded=true;
   self.active=false;
-  self.version='v5.3.2';
+  self.version='v5.3.3';
   self.difficulty = false;
   self.frames={};
   self.size=40;
