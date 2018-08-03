@@ -1,4 +1,4 @@
--- MrTarget v5.3.3
+-- MrTarget v5.3.4
 -- =====================================================================
 -- This Work is provided under the Creative Commons
 -- Attribution-NonCommercial-NoDerivatives 4.0 International Public License
@@ -94,7 +94,7 @@ MrTarget = CreateFrame('Frame', 'MrTarget', UIParent);
 function MrTarget:Load()
   self.loaded=true;
   self.active=false;
-  self.version='v5.3.3';
+  self.version='v5.3.4';
   self.difficulty = false;
   self.frames={};
   self.size=40;
@@ -217,7 +217,7 @@ end
 
 function MrTarget:GetOptions()
   self.OPTIONS = MRTARGET_SETTINGS;
-  if not self.OPTIONS or not self.OPTIONS[40] then
+  if not self.OPTIONS then
     self.OPTIONS = mrtarget_copy(DEFAULT_OPTIONS);
   end
 end
