@@ -160,17 +160,16 @@ function MrTargetAuras:UpdateAuras(count, unit)
 end
 
 function MrTargetAuras:UpdateDebuff(count, unit)
-  local auras = {};
   for i=1,40 do
     if count > self.max then break; end
     local name, rank, icon, stack, type, duration, expires, source, _, _, id = UnitDebuff(unit, i, 'PLAYER');
+    if not id then break; end
     if name and icon then
       count = count+self:SetAura(count, id, name, duration, expires, icon, false);
-      auras[id] = name;
     end
   end
   for i=self.count,self.max do
-    if self.frames[i].id and not auras[self.frames[i].id] then
+    if self.frames[i].id and self.auras[self.frames[i].id] ~= i then
       self:UnsetAura(self.frames[i]);
     end
   end
@@ -179,17 +178,16 @@ function MrTargetAuras:UpdateDebuff(count, unit)
 end
 
 function MrTargetAuras:UpdateBuff(count, unit)
-  local auras = {};
   for i=1,40 do
     if count > self.max then break; end
     local name, rank, icon, stack, type, duration, expires, source, _, _, id = UnitBuff(unit, i, 'PLAYER');
+    if not id then break; end
     if name and icon and tonumber(expires) > 0 and not COOLDOWNS[id] then -- and tonumber(duration) < 3600
       count = count+self:SetAura(count, id, name, duration, expires, icon, false);
-      auras[id] = name;
     end
   end
   for i=self.count,self.max do
-    if self.frames[i].id and not auras[self.frames[i].id] then
+    if self.frames[i].id and self.auras[self.frames[i].id] ~= i then
       self:UnsetAura(self.frames[i]);
     end
   end
@@ -233,10 +231,6 @@ function MrTargetAuras:MovePositions()
   end
 end
 
-function MrTargetAuras:UnitDead()
-  self:Destroy();
-end
-
 function MrTargetAuras:Destroy()
   for i=1,self.max do
     self:UnsetAura(self.frames[i]);
@@ -276,12 +270,12 @@ end
 function MrTargetAuras:OnUpdate(time)
   self.update = self.update + time;
   if self.update > self.frequency then
-    self.update = 0;
     self:UnitAura(self.parent.unit);
+    self.update = 0;
   end
 end
 
-function MrTargetAuras:CombatLogRangeCheck(sourceName, destName, spellId)
+function MrTargetAuras:CombatLogAuraCheck(sourceName, destName, spellId)
   if MrTarget.active then
     if self.parent.unit then
       if (sourceName and self.parent.name == sourceName) or (destName and self.parent.name == destName) then
@@ -302,6 +296,6 @@ end
 function MrTargetAuras:OnEvent(event, ...)
   if event == 'COMBAT_LOG_EVENT_UNFILTERED' then
     local _, _, _, _, sourceName, _, _, _, destName, _, _, spellId = ...;
-    self:CombatLogRangeCheck(sourceName, destName, spellId);
+    self:CombatLogAuraCheck(sourceName, destName, spellId);
   end
 end

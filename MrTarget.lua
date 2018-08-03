@@ -1,4 +1,4 @@
--- MrTarget v5.3.0
+-- MrTarget v5.3.1
 -- =====================================================================
 -- This Work is provided under the Creative Commons
 -- Attribution-NonCommercial-NoDerivatives 4.0 International Public License
@@ -94,7 +94,7 @@ MrTarget = CreateFrame('Frame', 'MrTarget', UIParent);
 function MrTarget:Load()
   self.loaded=true;
   self.active=false;
-  self.version='v5.3.0';
+  self.version='v5.3.1';
   self.difficulty = false;
   self.frames={};
   self.size=40;
@@ -454,30 +454,32 @@ end
 function MrTarget:OpenOptions(size)
   if not self.active then
     self.size = size;
-    self:Unlock();
     self:Initialize();
     self.options_open = true;
-    if self:GetOption('ENABLED') then
-      self:ObjectivesFrame(true);
-      if self:GetOption('ENEMY') then
-         self.frames.HARMFUL:CreateStub(ENEMIES, size);
+    if not InCombatLockdown() then
+      self:Unlock();
+      if self:GetOption('ENABLED') then
+        self:ObjectivesFrame(true);
+        if self:GetOption('ENEMY') then
+           self.frames.HARMFUL:CreateStub(ENEMIES, size);
+        else
+          self.frames.HARMFUL:Destroy();
+        end
+        if self:GetOption('FRIENDLY') then
+          self.frames.HELPFUL:CreateStub(FRIENDS, size);
+        else
+          self.frames.HELPFUL:Destroy();
+        end
+        if self:GetOption('BORDERLESS') then
+          self.options_frame.tabs[size].Icons:Show();
+        else
+          self.options_frame.tabs[size].Icons:Hide();
+        end
+        self:UpdateOptions();
+        self:CreateDemo();
       else
-        self.frames.HARMFUL:Destroy();
+        self:Destroy();
       end
-      if self:GetOption('FRIENDLY') then
-        self.frames.HELPFUL:CreateStub(FRIENDS, size);
-      else
-        self.frames.HELPFUL:Destroy();
-      end
-      if self:GetOption('BORDERLESS') then
-        self.options_frame.tabs[size].Icons:Show();
-      else
-        self.options_frame.tabs[size].Icons:Hide();
-      end
-      self:UpdateOptions();
-      self:CreateDemo();
-    else
-      self:Destroy();
     end
   end
 end
@@ -508,7 +510,6 @@ end
 function MrTarget:Destroy()
   self.frames.HARMFUL:Destroy();
   self.frames.HELPFUL:Destroy();
-  collectgarbage('collect');
 end
 
 function MrTarget:AddonLoaded(addon)

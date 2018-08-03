@@ -221,13 +221,13 @@ function MrTargetGroup:UpdateBattlefieldScore()
     local numScores = GetNumBattlefieldScores();
     if numScores > 0 then
       self.next_name = 1;
-      local units = {};
+      self.units = table.wipe(self.units);
       for i=1, numScores do
         local name, _, _, _, _, faction, race, _, class, _, _, _, _, _, _, spec = GetBattlefieldScore(i);
         if (faction == self.faction) == self.friendly then
           class = class or select(2, UnitClass(name));
           if ROLES[class][spec] then
-            table.insert(units, {
+            table.insert(self.units, {
               name=name,
               display=name,
               class=class,
@@ -238,8 +238,6 @@ function MrTargetGroup:UpdateBattlefieldScore()
           end
         end
       end
-      self.units = table.wipe(self.units);
-      self.units = units;
       table.sort(self.units, SortUnits);
       for i=1,#self.units do
         self.units[i].display = self:GetDisplayName(self.units[i].name);
@@ -296,6 +294,9 @@ function MrTargetGroup:PlayerDead()
       self.frames[i]:PlayerDead();
     end
   end
+  if GetAddOnMemoryUsage("MrTarget") > MrTarget:GetSize()*100 then
+    collectgarbage('collect');
+  end
 end
 
 function MrTargetGroup:PlayerRegenEnabled()
@@ -323,9 +324,6 @@ function MrTargetGroup:OnUpdate(time)
   self.update = self.update + time;
   if self.update < self.tick or (WorldStateScoreFrame and WorldStateScoreFrame:IsShown()) then
     return;
-  end
-  if GetAddOnMemoryUsage("MrTarget") > MrTarget:GetSize()*80 then
-    collectgarbage('collect');
   end
   if self.update_units and not InCombatLockdown() and #self.units > 0 then
     for i=1, #self.frames do
@@ -461,14 +459,14 @@ function MrTargetGroup:GetPosition()
 end
 
 function MrTargetGroup:OnDragStart()
-  if not MrTarget:GetLocked() then
+  if not MrTarget:GetLocked() and not InCombatLockdown() then
     self.frame:ClearAllPoints();
     self.frame:StartMoving();
   end
 end
 
 function MrTargetGroup:OnDragStop()
-  if not MrTarget:GetLocked() then
+  if not MrTarget:GetLocked() and not InCombatLockdown() then
     MrTarget.OPTIONS[self.max].POSITION[self.group] = self:GetPosition();
     self.frame:StopMovingOrSizing();
     self:UpdateOrientation();

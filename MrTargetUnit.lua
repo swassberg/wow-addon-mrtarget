@@ -137,9 +137,11 @@ function MrTargetUnit:UnitHealthColor(alpha)
 end
 
 function MrTargetUnit:UnitPowerColor(alpha)
-  local powerType, powerToken = UnitPowerType(self.name);
-  local color = POWER_BAR_COLORS[powerToken] or POWER_BAR_COLORS.MANA;
-  self.frame.POWER_BAR:SetStatusBarColor(color.r, color.g, color.b, alpha);
+  if self.name then
+    local powerType, powerToken = UnitPowerType(self.name);
+    local color = POWER_BAR_COLORS[powerToken] or POWER_BAR_COLORS.MANA;
+    self.frame.POWER_BAR:SetStatusBarColor(color.r, color.g, color.b, alpha);
+  end
 end
 
 function MrTargetUnit:SetAlpha(alpha)
@@ -164,7 +166,6 @@ function MrTargetUnit:UnitUpdate()
         self.power = 0;
         self.range = nil;
         self.dead = true;
-        self.auras:UnitDead();
       elseif self.dead then
         self.dead = false;
       end
@@ -177,7 +178,6 @@ function MrTargetUnit:PlayerDead()
   self.power = 0;
   self.range = nil;
   self.dead = true;
-  self.auras:Destroy();
 end
 
 function MrTargetUnit:UnitCheck(unit)
