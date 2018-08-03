@@ -7,7 +7,7 @@ MrTargetRange = {
   frame=nil,
   parent=nil,
   range=nil,
-  frequency=0.5,
+  frequency=1,
   update=0
 };
 
@@ -82,10 +82,12 @@ function MrTargetRange:CombatLogRangeCheck(sourceName, destName, spellId)
         if UnitIsEnemy('player', self.parent.unit) then
           self.range = self:GetHarmfulRange();
           self.parent.range = self.range;
+          self.update = 0;
           return;
         else
           self.range = self:GetHelpfulRange();
           self.parent.range = self.range;
+          self.update = 0;
           return;
         end
       end
@@ -93,10 +95,12 @@ function MrTargetRange:CombatLogRangeCheck(sourceName, destName, spellId)
         if UnitIsEnemy('player', self.parent.unit) then
           self.range = self:GetHarmfulRange();
           self.parent.range = self.range;
+          self.update = 0;
           return;
         else
           self.range = self:GetHelpfulRange();
           self.parent.range = self.range;
+          self.update = 0;
           return;
         end
       end

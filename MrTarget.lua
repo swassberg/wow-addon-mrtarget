@@ -1,4 +1,4 @@
--- MrTarget v5.2.2
+-- MrTarget v5.2.4
 -- =====================================================================
 -- This Work is provided under the Creative Commons
 -- Attribution-NonCommercial-NoDerivatives 4.0 International Public License
@@ -28,6 +28,34 @@ local DEFAULT_BATTLEFIELD_OPTIONS = {
   AURAS=true,
   COLUMNS=1
 };
+
+local function count_all(f)
+  local seen = {}
+  local count_table
+  count_table = function(t)
+    if seen[t] then return end
+    f(t)
+    seen[t] = true
+    for k,v in pairs(t) do
+      if type(v) == "table" then
+        count_table(v)
+      elseif type(v) == "userdata" then
+        f(v)
+      end
+    end
+  end
+  count_table(_G)
+end
+
+local function type_count()
+  local counts = {}
+  local enumerate = function (o)
+    local t = type_name(o)
+    counts[t] = (counts[t] or 0) + 1
+  end
+  count_all(enumerate)
+  return counts
+end
 
 function mrtarget_copy(obj, seen)
   if type(obj) ~= 'table' then return obj end
@@ -93,7 +121,7 @@ MrTarget = CreateFrame('Frame', 'MrTarget', UIParent);
 function MrTarget:Load()
   self.loaded=true;
   self.active=false;
-  self.version='v5.2.2';
+  self.version='v5.2.4';
   self.difficulty = false;
   self.frames={};
   self.size=40;
@@ -507,6 +535,7 @@ end
 function MrTarget:Destroy()
   self.frames.HARMFUL:Destroy();
   self.frames.HELPFUL:Destroy();
+  collectgarbage('collect');
 end
 
 function MrTarget:AddonLoaded(addon)

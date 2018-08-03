@@ -244,6 +244,7 @@ function MrTargetGroup:UpdateBattlefieldScore()
       for i=1,#self.units do
         self.units[i].display = self:GetDisplayName(self.units[i].name);
       end
+      collectgarbage('collect');
       self.update_units = true;
     end
   end

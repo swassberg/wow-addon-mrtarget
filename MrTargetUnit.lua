@@ -290,7 +290,7 @@ function MrTargetUnit:OnEvent(event, unit, ...)
 end
 
 function MrTargetUnit:RegisterEvents()
-  self.frame:RegisterEvent('UNIT_wHEALTH_FREQUENT');
+  self.frame:RegisterEvent('UNIT_HEALTH_FREQUENT');
   self.frame:RegisterEvent('UPDATE_MOUSEOVER_UNIT');
   self.frame:RegisterEvent('UNIT_COMBAT');
   self.frame:RegisterEvent('UNIT_TARGET');
