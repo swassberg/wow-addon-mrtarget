@@ -135,20 +135,31 @@ function MrTargetAuras:UnitAura(unit)
 end
 
 function MrTargetAuras:UpdateCarriers(count, unit)
-  for k, v in pairs(AURAS) do
+  local unitAuras = {}
+  for i=1,self.max do
     if count > self.max then break; end
-    local name, rank, _, stack, type, duration, expires, source, _, _, id = UnitAura(unit, AURAS[k].name);
-    if name then
-      count = count+self:SetAura(count, id, name, duration, expires, AURAS[k].icon, false);
-    else
-      id = select(7, GetSpellInfo(AURAS[k].name));
-      if self.auras[id] then
-        self:UnsetAura(self.frames[self.auras[id]]);
-      end
+    local _, _, _, _, _, _, _, _, _, id = UnitAura(unit, i);
+    if id then
+      unitAuras[id] = i;
     end
   end
-  self:UpdatePositions();
-  return count;
+
+  for k, v in pairs(AURAS) do 
+    if count > self.max then break; end 
+    if unitAuras[k] then
+      print(k);
+      local name, _, stack, type, duration, expires, source, _, _, id = UnitAura(unit, unitAuras[k]);
+      count = count+self:SetAura(count, id, name, duration, expires, AURAS[k].icon, false); 
+    else 
+      id = select(7, GetSpellInfo(AURAS[k].name)); 
+      if self.auras[id] then 
+        self:UnsetAura(self.frames[self.auras[id]]); 
+      end 
+    end 
+  end 
+  self:UpdatePositions(); 
+  return count; 
+
 end
 
 function MrTargetAuras:UpdateAuras(count, unit)
@@ -162,7 +173,7 @@ end
 function MrTargetAuras:UpdateDebuff(count, unit)
   for i=1,40 do
     if count > self.max then break; end
-    local name, rank, icon, stack, type, duration, expires, source, _, _, id = UnitDebuff(unit, i, 'PLAYER');
+    local name, icon, stack, type, duration, expires, source, _, _, id = UnitDebuff(unit, i, 'PLAYER');
     if not id then break; end
     if name and icon then
       count = count+self:SetAura(count, id, name, duration, expires, icon, false);
@@ -180,7 +191,7 @@ end
 function MrTargetAuras:UpdateBuff(count, unit)
   for i=1,40 do
     if count > self.max then break; end
-    local name, rank, icon, stack, type, duration, expires, source, _, _, id = UnitBuff(unit, i, 'PLAYER');
+    local name, icon, stack, type, duration, expires, source, _, _, id = UnitBuff(unit, i, 'PLAYER');
     if not id then break; end
     if name and icon and tonumber(expires) > 0 and not COOLDOWNS[id] then -- and tonumber(duration) < 3600
       count = count+self:SetAura(count, id, name, duration, expires, icon, false);
@@ -311,7 +322,7 @@ end
 
 function MrTargetAuras:OnEvent(event, ...)
   if event == 'COMBAT_LOG_EVENT_UNFILTERED' then
-    local _, _, _, _, sourceName, _, _, _, destName, _, _, spellId = ...;
-    self:CombatLogAuraCheck(sourceName, destName, spellId);
+    local timestamp, event, hideCaster, sourceGUID, sourceName, sourceFlags, sourceRaidFlags, destGUID, destName, destFlags, destRaidFlags, extraArg1, extraArg2, extraArg3, extraArg4, extraArg5, extraArg6, extraArg7, extraArg8, extraArg9, extraArg10 = CombatLogGetCurrentEventInfo()
+    self:CombatLogAuraCheck(sourceName, destName, extraArg1); --extraArg1 => spellID
   end
 end

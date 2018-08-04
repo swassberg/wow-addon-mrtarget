@@ -1,6 +1,6 @@
-## Interface: 70300
+## Interface: 80000
 ## Author: Renevatium
-## Version: 5.3.4
+## Version: 8.0.1-r1
 ## Title: MrTarget
 ## DefaultState: Enabled
 ## SavedVariables: MRTARGET_OPTIONS

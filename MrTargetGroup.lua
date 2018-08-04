@@ -22,7 +22,7 @@ local CYRILLIC = {
 
 local ROLES = {};
 for classID=1, MAX_CLASSES do
-  local className, classTag, classID = GetClassInfoByID(classID);
+  local className, classTag, classID = GetClassInfo(classID);
   local numTabs = GetNumSpecializationsForClassID(classID);
   ROLES[classTag] = {};
   for i=1, numTabs do
