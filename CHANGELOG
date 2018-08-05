@@ -1,6 +1,16 @@
-MrTarget v5.3.4
+MrTarget v8.0.1-r1
 =====================================================================
 Copyright (C) Lock of War, Renevatium
+
+Battle for Azeroth v8.0.1
+---------------------------------------------------------------------
+04/08/2018
+v8.0.1-r1
+Updated to support patch 8.0.1 (80000)
+Replaced deprecated / changed API calls (CombatLogGetCurrentEventInfo,UnitBuff,UnitDebuff,UnitAura)
+Removed support for Strand of the Ancients
+Added support for Seething Shore
+
 
 Legion v7.3.0
 ---------------------------------------------------------------------
