@@ -144,21 +144,20 @@ function MrTargetAuras:UpdateCarriers(count, unit)
     end
   end
 
-  for k, v in pairs(AURAS) do 
-    if count > self.max then break; end 
+  for k, v in pairs(AURAS) do
+    if count > self.max then break; end
     if unitAuras[k] then
-      print(k);
       local name, _, stack, type, duration, expires, source, _, _, id = UnitAura(unit, unitAuras[k]);
-      count = count+self:SetAura(count, id, name, duration, expires, AURAS[k].icon, false); 
-    else 
-      id = select(7, GetSpellInfo(AURAS[k].name)); 
-      if self.auras[id] then 
-        self:UnsetAura(self.frames[self.auras[id]]); 
-      end 
-    end 
-  end 
-  self:UpdatePositions(); 
-  return count; 
+      count = count+self:SetAura(count, id, name, duration, expires, AURAS[k].icon, false);
+    else
+      id = select(7, GetSpellInfo(AURAS[k].name));
+      if self.auras[id] then
+        self:UnsetAura(self.frames[self.auras[id]]);
+      end
+    end
+  end
+  self:UpdatePositions();
+  return count;
 
 end
 
